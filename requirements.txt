@@ -1,0 +1,14 @@
+# ComfyUI normally already provides torch, torchaudio, transformers, tokenizers,
+# safetensors, and huggingface_hub. This nodepack intentionally does not pin or
+# upgrade torch/transformers; it is built for Transformers 5.3+ (Qwen3).
+accelerate
+numpy
+safetensors
+tokenizers
+huggingface_hub
+regex
+tqdm
+# zh/en text normalization (optional but recommended)
+wetext
+# fasttext language-id binding for language=auto (optional, CPU wheels)
+fasttext-predict

@@ -1,0 +1,36 @@
+[project]
+name = "FireRedTTS3-ComfyUI"
+description = "ComfyUI custom nodes for FireRedTTS3: zero-shot voice cloning (24 languages + 21 Chinese dialects), voice design, and speech editing, with native inference and AIMDO DynamicVRAM support"
+version = "0.1.0"
+license = {file = "LICENSE"}
+dependencies = [
+    "accelerate",
+    "numpy",
+    "safetensors",
+    "tokenizers",
+    "huggingface-hub",
+    "regex",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+frontend = [
+    "wetext",
+    "fasttext-predict",
+]
+
+[project.urls]
+Repository = "https://github.com/Saganaki22/FireRedTTS3-ComfyUI"
+Model = "https://huggingface.co/FireRedTeam/FireRedTTS3"
+Model_bf16 = "https://huggingface.co/drbaph/FireRedTTS3-bf16"
+
+[tool.comfy]
+PublisherId = "saganaki22"
+DisplayName = "FireRedTTS3"
+Icon = "https://avatars.githubusercontent.com/u/84208527"
+PreInstall = "install.py"
+
+[tool.fireredtts3]
+transformers = ">=5.3.0"
+recommended-transformers = "5.3.0"
+model-vram = "about 8 GB with bf16 backbone on CUDA (fp32 flow head/decoder)"
