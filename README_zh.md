@@ -10,7 +10,7 @@
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-FireRedTeam%2FFireRedTTS3-blue)](https://huggingface.co/FireRedTeam/FireRedTTS3)
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-drbaph%2FFireRedTTS3--bf16-green)](https://huggingface.co/drbaph/FireRedTTS3-bf16)
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-drbaph%2FFireRedTTS3--int8-green)](https://huggingface.co/drbaph/FireRedTTS3-int8)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/blob/main/LICENSE)
 
 > 许可说明：FireRedTTS3 由 FireRed 团队以 Apache-2.0 许可发布，仅供学术研究用途。未经授权请勿克隆他人声音。
 

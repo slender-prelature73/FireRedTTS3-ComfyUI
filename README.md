@@ -9,7 +9,7 @@ ComfyUI nodes for [FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/F
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Custom%20Node-orange)](https://github.com/comfyanonymous/ComfyUI)
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-FireRedTeam%2FFireRedTTS3-blue)](https://huggingface.co/FireRedTeam/FireRedTTS3)
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-drbaph%2FFireRedTTS3--bf16-green)](https://huggingface.co/drbaph/FireRedTTS3-bf16)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/blob/main/LICENSE)
 
 > License note: FireRedTTS3 is released by the FireRed Team under Apache-2.0 for academic research purposes. Do not use voice cloning without consent.
 
