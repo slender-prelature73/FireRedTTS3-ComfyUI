@@ -55,18 +55,32 @@ This nodepack is built for Transformers **5.3.0+** (tested on 5.3.0). It loads F
 
 ## Model Files
 
-Weights are stored per source repo under `ComfyUI/models/fireredtts3/`:
+Weights are stored per source repo under `ComfyUI/models/fireredtts3/` (primary folder first; extra_model_paths.yaml entries and symlinks are searched too). Missing files download automatically when `download_if_missing` is on, otherwise the error names the expected folder.
 
-```text
-ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-bf16/        (bf16 mirror, default)
-ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-int8/        (int8 ConvRot mirror)
-ComfyUI/models/fireredtts3/FireRedTeam_FireRedTTS3/        (official fp32)
-    fireredtts3_base/         config.json + model.safetensors
-    fireredtts3_instruct/     config.json + model.safetensors
-    redae/                    config.json + model.safetensors
-    campp/                    campplus_voxceleb.bin
-    text_tokenizer/           tokenizer.json, vocab.json, tokenizer_config.json
-ComfyUI/models/fireredtts3/fasttext/lid.176.ftz            (shared language-ID model)
+```
+📂 ComfyUI/
+└── 📂 models/
+    └── 📂 fireredtts3/
+        ├── 📂 drbaph_FireRedTTS3-bf16/        (bf16 mirror, default)
+        │   ├── 📂 fireredtts3_base/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 fireredtts3_instruct/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 redae/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 campp/
+        │   │   └── campplus_voxceleb.bin
+        │   └── 📂 text_tokenizer/
+        │       ├── tokenizer.json
+        │       ├── tokenizer_config.json
+        │       └── vocab.json
+        ├── 📂 drbaph_FireRedTTS3-int8/        (int8 ConvRot mirror, same layout)
+        ├── 📂 FireRedTeam_FireRedTTS3/        (official fp32, same layout)
+        └── 📂 fasttext/
+            └── lid.176.ftz                    (shared language-ID model)
 ```
 
 Only the selected variant is downloaded; both variants share `redae/`, `campp/`, and `text_tokenizer/`.

@@ -56,18 +56,32 @@ Windows 本地环境：
 
 ## 模型文件
 
-权重按来源存放在 `ComfyUI/models/fireredtts3/` 下（支持 `extra_model_paths.yaml` 额外路径与符号链接，本地已有即用，缺失时按 `download_if_missing` 决定下载或提示）：
+权重按来源存放在 `ComfyUI/models/fireredtts3/` 下（主文件夹优先；同时搜索 extra_model_paths.yaml 额外路径与符号链接）。缺失文件在 `download_if_missing` 开启时自动下载，否则报错并提示放置路径。
 
-```text
-ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-bf16/        (bf16 镜像，默认)
-ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-int8/        (int8 ConvRot 镜像)
-ComfyUI/models/fireredtts3/FireRedTeam_FireRedTTS3/        (官方 fp32)
-    fireredtts3_base/         config.json + model.safetensors
-    fireredtts3_instruct/     config.json + model.safetensors
-    redae/                    config.json + model.safetensors
-    campp/                    campplus_voxceleb.bin
-    text_tokenizer/           tokenizer.json, vocab.json, tokenizer_config.json
-ComfyUI/models/fireredtts3/fasttext/lid.176.ftz            (共享语言识别模型)
+```
+📂 ComfyUI/
+└── 📂 models/
+    └── 📂 fireredtts3/
+        ├── 📂 drbaph_FireRedTTS3-bf16/        (bf16 镜像，默认)
+        │   ├── 📂 fireredtts3_base/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 fireredtts3_instruct/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 redae/
+        │   │   ├── config.json
+        │   │   └── model.safetensors
+        │   ├── 📂 campp/
+        │   │   └── campplus_voxceleb.bin
+        │   └── 📂 text_tokenizer/
+        │       ├── tokenizer.json
+        │       ├── tokenizer_config.json
+        │       └── vocab.json
+        ├── 📂 drbaph_FireRedTTS3-int8/        (int8 ConvRot 镜像，布局相同)
+        ├── 📂 FireRedTeam_FireRedTTS3/        (官方 fp32，布局相同)
+        └── 📂 fasttext/
+            └── lid.176.ftz                    (共享语言识别模型)
 ```
 
 只下载所选变体；两个变体共享 `redae/`、`campp/` 与 `text_tokenizer/`。
