@@ -1,5 +1,8 @@
 # FireRedTTS3-ComfyUI
 
+<img width="1040" height="1058" alt="Screenshot 2026-08-14 205748" src="https://github.com/user-attachments/assets/9d1c3470-5329-4d4d-a6cd-a02f2a36d51a" />
+
+
 **English** | **[中文](./README_zh.md)**
 
 **Version: v0.2.0**
