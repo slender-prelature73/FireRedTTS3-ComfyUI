@@ -25,7 +25,7 @@
 - **ComfyUI AUDIO 输入输出** - 参考音频、编辑输入与生成音频均使用标准 ComfyUI `AUDIO`。
 - **AIMDO DynamicVRAM 支持** - 核心模型、编解码器、说话人编码器分别注册为 ComfyUI 模型，权重可转换分页，DynamicVRAM 激活时自动接管。
 - **bf16 镜像** - 可选的半体积权重，与官方混合精度一致：主干 LLM 与 RedAE 编码器存为 bf16（官方推理本就在 bf16 autocast 下计算），流匹配头与 RedAE 解码器保持 fp32。同种子测试输出与 fp32 版本一致（SNR > 80 dB）。
-- **INT8 ConvRot 核心（实验性）** - `tools/quantize_fireredtts3_int8_convrot.py` 使用官方 comfy-kitchen 量化器把核心 transformer 线性层转换为 Comfy INT8 ConvRot（格式 `int8_tensorwise`、逐行 fp32 缩放、离线 Hadamard 权重旋转、group size 256）。加载器自动识别 `*.comfy_quant` 键并通过 `comfy_kitchen.int8_linear(convrot=True)` 在线旋转激活执行；其余层（嵌入、边界投影、stop_head、Conv1d、RedAE、CAM++）保持浮点。321/332 线性层 → 检查点 7.90 → 3.07 GiB，峰值显存 13.1 → 8.3 GiB，输出质量已验证。可用 `tools/validate_int8_convrot.py` 本地复验。
+- **INT8 ConvRot 权重（实验性）** - `FireRedTTS3-int8` 镜像内置已量化的核心 transformer 线性层（Comfy INT8 ConvRot：格式 `int8_tensorwise`、逐行 fp32 缩放、离线 Hadamard 权重旋转、group size 256，使用官方 comfy-kitchen 量化器）。加载器自动识别 `*.comfy_quant` 键并通过 `comfy_kitchen.int8_linear(convrot=True)` 在线旋转激活执行；其余层（嵌入、边界投影、stop_head、Conv1d、RedAE、CAM++）保持浮点。321/332 线性层 → 检查点 7.90 → 3.07 GiB，输出质量已验证。
 - **Whisper 转写节点** - 一键把参考音频转成显著提升克隆质量的 `prompt_text` 转写文本，并原样透传输入音频。
 - **无需 keep-loaded 开关、无需卸载节点** - 加载器内部自动处理模型切换清理。
 
