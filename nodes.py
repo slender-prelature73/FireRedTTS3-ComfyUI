@@ -19,7 +19,7 @@ from .loader import (
 from .tokenizer import LANGUAGE_CHOICES
 from .whisper import FireRedWhisperTranscribe
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 
 try:
     from comfy.utils import ProgressBar
@@ -69,7 +69,7 @@ def _generation_controls(default_cfg: float) -> dict:
         "seed": (
             "INT",
             {
-                "default": 0,
+                "default": 42,
                 "min": 0,
                 "max": 2**31 - 1,
                 "tooltip": "0 uses the current random state. A positive value is repeatable.",
@@ -160,7 +160,7 @@ def _generate_clone_audio(
         do_split=bool(do_split),
         tokenize=lambda s: native.measure_tokens(bundle, s),
     )
-    logger.info("FireRedTTS3 %s cloning: %d sentence(s), language=%s", bundle.variant, len(sentences), language)
+    logger.info("%s cloning: %d sentence(s), language=%s", bundle.variant, len(sentences), language)
 
     prompt_latents, prompt_audio_len = native.tokenize_prompt_audio(bundle, waveform, sample_rate)
     spk_emb = None
@@ -173,7 +173,7 @@ def _generate_clone_audio(
     segments: list[torch.Tensor] = []
     gen_audio_sr = None
     for index, sentence in enumerate(sentences):
-        logger.info("FireRedTTS3 sentence %d/%d: %s", index + 1, len(sentences), sentence[:90])
+        logger.info("sentence %d/%d: %s", index + 1, len(sentences), sentence[:60])
 
         def update(current: int, total: int, sentence_index: int = index) -> None:
             if pbar is None:
@@ -218,7 +218,12 @@ def _generate_clone_audio(
 
 def _require_instruct(bundle, node_name: str) -> None:
     if bundle.variant != "instruct":
-        raise RuntimeError(f"{node_name} requires the FireRedTTS3-Instruct model. Load fireredtts3_instruct in the loader node.")
+        raise RuntimeError(
+            f"{node_name} needs the Instruct model, but the FireRedTTS3 Load Model node has "
+            f"variant='fireredtts3_base' loaded (from {bundle.model_dir.name}). "
+            f"Fix: set variant to 'fireredtts3_instruct' on the FireRedTTS3 Load Model node and re-run. "
+            f"Voice Clone works with both variants; Voice Design, Semantic Edit and Acoustic Edit are Instruct-only."
+        )
 
 
 class FireRedTTS3LoadModel:
@@ -229,14 +234,14 @@ class FireRedTTS3LoadModel:
                 "repo": (
                     get_repo_choices(),
                     {
-                        "default": "FireRedTTS3 bf16 - drbaph (auto-download)",
-                        "tooltip": "Weight source. The bf16 mirror keeps the flow head/decoder in fp32 and matches the official mixed-precision compute. Folders under ComfyUI/models/fireredtts3 appear as local entries.",
+                        "default": "FireRedTTS3-bf16",
+                        "tooltip": "Weight source. bf16 keeps the flow head/decoder in fp32 and matches official mixed-precision compute (recommended). int8 ConvRot quantizes the transformer linears (smallest, experimental). fp32 is the official full-precision repo. Missing files download when download_if_missing is on; otherwise the error tells you where to place them.",
                     },
                 ),
                 "variant": (
                     VARIANTS,
                     {
-                        "default": "fireredtts3_base",
+                        "default": "fireredtts3_instruct",
                         "tooltip": "fireredtts3_base: zero-shot cloning with language tags. fireredtts3_instruct: cloning plus voice design and speech editing.",
                     },
                 ),
@@ -258,7 +263,7 @@ class FireRedTTS3LoadModel:
                     ATTENTION_OPTIONS,
                     {
                         "default": "auto",
-                        "tooltip": "Attention backend for the Qwen3 transformers. auto/sdpa is recommended; flash_attention needs flash_attn; sageattention patches SDPA at runtime.",
+                        "tooltip": "Attention backend for the Qwen3 transformers. auto uses flash_attention when flash_attn is installed and compatible (CUDA + bf16 compute), else sdpa. The fp32 RedAE decoder always uses sdpa.",
                     },
                 ),
                 "download_if_missing": (
@@ -295,7 +300,7 @@ class FireRedTTS3VoiceClone:
         required = {
             "firered_model": ("FIREREDTTS3_MODEL",),
             "text": _text_input(
-                "今天天气很好，我们一起去公园散步吧。",
+                "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
                 "Text to synthesize. Long text is split into sentences automatically when do_split is on.",
             ),
             "prompt_audio": (
@@ -350,11 +355,11 @@ class FireRedTTS3VoiceDesign:
         required = {
             "firered_model": ("FIREREDTTS3_MODEL",),
             "instruction": _text_input(
-                "一个年轻女性的温柔嗓音，语速稍慢，带一点俏皮。",
-                "Natural-language voice description (gender, age, timbre, emotion, pace, accent). No reference audio needed.",
+                "A gentle young female voice, speaking a little slowly, with a playful touch.",
+                "Natural-language voice description (gender, age, timbre, emotion, pace, accent). Any language works; the model card's Chinese examples are also good templates. No reference audio needed.",
             ),
             "text": _text_input(
-                "今天天气很好，我们一起去公园散步吧。",
+                "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
                 "Text to synthesize with the designed voice.",
             ),
             "language": (
@@ -409,7 +414,7 @@ class FireRedTTS3VoiceDesign:
         gen_audio_sr = None
         voice_plan = ""
         for index, sentence in enumerate(sentences):
-            logger.info("FireRedTTS3 voice design sentence %d/%d: %s", index + 1, len(sentences), sentence[:90])
+            logger.info("voice design sentence %d/%d: %s", index + 1, len(sentences), sentence[:60])
 
             def update(current: int, total: int, sentence_index: int = index) -> None:
                 if pbar is None:
@@ -436,7 +441,7 @@ class FireRedTTS3VoiceDesign:
                 voice_plan = segment_plan
             if pbar is not None:
                 pbar.update_absolute((index + 1) * PROGRESS_UNITS_PER_SENTENCE, progress_total)
-        logger.info("FireRedTTS3 voice plan: %s", voice_plan)
+        logger.info("voice plan: %s", voice_plan[:150])
         return (_concat_segments(segments, gen_audio_sr, cross_fade_ms), voice_plan)
 
 
@@ -487,7 +492,7 @@ class FireRedTTS3SemanticEdit:
         )
         if not torch.isfinite(segment).all():
             raise RuntimeError("FireRedTTS3 generated non-finite audio samples.")
-        logger.info("FireRedTTS3 semantic edit text: %s", edited_text)
+        logger.info("semantic edit text: %s", edited_text[:150])
         return (native.tensor_audio_to_comfy(segment, gen_audio_sr), edited_text)
 
 
@@ -551,7 +556,7 @@ class FireRedTTS3AcousticEdit:
             if pbar is not None:
                 pbar.update_absolute(min(current, max_gen_steps), max_gen_steps)
 
-        logger.info("FireRedTTS3 acoustic edit instruction: %s", instruction)
+        logger.info("acoustic edit: %s", instruction)
         segment, gen_audio_sr = native.acoustic_edit_one(
             firered_model,
             instruction=instruction,
@@ -568,62 +573,12 @@ class FireRedTTS3AcousticEdit:
         return (native.tensor_audio_to_comfy(segment, gen_audio_sr),)
 
 
-class FireRedTTS3RedAEEncode:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "firered_model": ("FIREREDTTS3_MODEL",),
-                "audio": ("AUDIO", {"tooltip": "Audio to encode into RedAE latents (24 kHz, 64 channels, 25 Hz)."}),
-            },
-        }
-
-    RETURN_TYPES = ("FIREREDTTS3_LATENT",)
-    RETURN_NAMES = ("latent",)
-    FUNCTION = "encode"
-    CATEGORY = CATEGORY
-    DESCRIPTION = "Encode audio into FireRedTTS3 RedAE continuous latents."
-
-    def encode(self, firered_model, audio):
-        resume_bundle_to_device(firered_model)
-        waveform, sample_rate = native.comfy_audio_to_tensor(audio)
-        latents = native.redae_encode_latents(firered_model, waveform, sample_rate)
-        return ({"samples": latents},)
-
-
-class FireRedTTS3RedAEDecode:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "firered_model": ("FIREREDTTS3_MODEL",),
-                "latent": ("FIREREDTTS3_LATENT", {"tooltip": "RedAE latents from the encode node (raw, unscaled)."}),
-            },
-        }
-
-    RETURN_TYPES = ("AUDIO",)
-    RETURN_NAMES = ("audio",)
-    FUNCTION = "decode"
-    CATEGORY = CATEGORY
-    DESCRIPTION = "Decode FireRedTTS3 RedAE latents back to 24 kHz audio."
-
-    def decode(self, firered_model, latent):
-        resume_bundle_to_device(firered_model)
-        samples = latent["samples"]
-        if not isinstance(samples, torch.Tensor):
-            samples = torch.as_tensor(samples)
-        audio, audio_sr = native.redae_decode_audio(firered_model, samples)
-        return (native.tensor_audio_to_comfy(audio, audio_sr),)
-
-
 NODE_CLASS_MAPPINGS = {
     "FireRedTTS3LoadModel": FireRedTTS3LoadModel,
     "FireRedTTS3VoiceClone": FireRedTTS3VoiceClone,
     "FireRedTTS3VoiceDesign": FireRedTTS3VoiceDesign,
     "FireRedTTS3SemanticEdit": FireRedTTS3SemanticEdit,
     "FireRedTTS3AcousticEdit": FireRedTTS3AcousticEdit,
-    "FireRedTTS3RedAEEncode": FireRedTTS3RedAEEncode,
-    "FireRedTTS3RedAEDecode": FireRedTTS3RedAEDecode,
     "FireRedTTS3WhisperTranscribe": FireRedWhisperTranscribe,
 }
 
@@ -633,7 +588,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "FireRedTTS3VoiceDesign": "FireRedTTS3 Voice Design",
     "FireRedTTS3SemanticEdit": "FireRedTTS3 Semantic Edit",
     "FireRedTTS3AcousticEdit": "FireRedTTS3 Acoustic Edit",
-    "FireRedTTS3RedAEEncode": "FireRedTTS3 RedAE Encode",
-    "FireRedTTS3RedAEDecode": "FireRedTTS3 RedAE Decode",
     "FireRedTTS3WhisperTranscribe": "FireRedTTS3 Whisper Transcribe",
 }

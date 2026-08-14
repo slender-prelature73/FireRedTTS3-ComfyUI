@@ -1,0 +1,851 @@
+{
+  "id": "e6fb61d9-fbc4-443d-99fa-6cc715d9abb4",
+  "revision": 0,
+  "last_node_id": 13,
+  "last_link_id": 13,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "MarkdownNote",
+      "pos": [
+        -728.4174489233543,
+        -40.22014007078716
+      ],
+      "size": [
+        392.07982229236507,
+        794.1036280930456
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "‎",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Model Links\n[🤗 drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16) (recommended) · [🤗 drbaph/FireRedTTS3-int8](https://huggingface.co/drbaph/FireRedTTS3-int8) (smallest, experimental) · [🤗 FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3) (official fp32)\n\nAll three repos share the same layout; the loader downloads only the variant you select plus the shared components.\n\n**fireredtts3_base / fireredtts3_instruct** (choose one or both)\n\n- [model.safetensors (base)](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fireredtts3_base/model.safetensors)\n- [model.safetensors (instruct)](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fireredtts3_instruct/model.safetensors)\n\n**redae**\n\n- [model.safetensors](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/redae/model.safetensors)\n\n**campp** (base variant only)\n\n- [campplus_voxceleb.bin](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/campp/campplus_voxceleb.bin)\n\n**text_tokenizer**\n\n- [tokenizer.json](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/text_tokenizer/tokenizer.json)\n\n**fasttext** (language auto-detect)\n\n- [lid.176.ftz](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fasttext/lid.176.ftz)\n\n## Model Storage Location\n\n```\n📂 ComfyUI/\n└── 📂 models/\n    └── 📂 fireredtts3/\n        └── 📂 drbaph_FireRedTTS3-bf16/\n        │   ├── 📂 fireredtts3_base/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 fireredtts3_instruct/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 redae/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 campp/\n        │   │   └── campplus_voxceleb.bin\n        │   └── 📂 text_tokenizer/\n        │       ├── tokenizer.json\n        │       ├── tokenizer_config.json\n        │       └── vocab.json\n        └── 📂 fasttext/\n            └── lid.176.ftz\n```\n\n## Report Issue\n\nNote: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and pick a weight repo in the FireRedTTS3 Load Model node (`FireRedTTS3-bf16` recommended); it downloads automatically when `download_if_missing` is on.\n\n- This node pack [issues](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/issues)\n"
+      ],
+      "widgets_values_named": {
+        "text": "## Model Links\n[🤗 drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16) (recommended) · [🤗 drbaph/FireRedTTS3-int8](https://huggingface.co/drbaph/FireRedTTS3-int8) (smallest, experimental) · [🤗 FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3) (official fp32)\n\nAll three repos share the same layout; the loader downloads only the variant you select plus the shared components.\n\n**fireredtts3_base / fireredtts3_instruct** (choose one or both)\n\n- [model.safetensors (base)](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fireredtts3_base/model.safetensors)\n- [model.safetensors (instruct)](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fireredtts3_instruct/model.safetensors)\n\n**redae**\n\n- [model.safetensors](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/redae/model.safetensors)\n\n**campp** (base variant only)\n\n- [campplus_voxceleb.bin](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/campp/campplus_voxceleb.bin)\n\n**text_tokenizer**\n\n- [tokenizer.json](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/text_tokenizer/tokenizer.json)\n\n**fasttext** (language auto-detect)\n\n- [lid.176.ftz](https://huggingface.co/drbaph/FireRedTTS3-bf16/resolve/main/fasttext/lid.176.ftz)\n\n## Model Storage Location\n\n```\n📂 ComfyUI/\n└── 📂 models/\n    └── 📂 fireredtts3/\n        └── 📂 drbaph_FireRedTTS3-bf16/\n        │   ├── 📂 fireredtts3_base/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 fireredtts3_instruct/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 redae/\n        │   │   ├── config.json\n        │   │   └── model.safetensors\n        │   ├── 📂 campp/\n        │   │   └── campplus_voxceleb.bin\n        │   └── 📂 text_tokenizer/\n        │       ├── tokenizer.json\n        │       ├── tokenizer_config.json\n        │       └── vocab.json\n        └── 📂 fasttext/\n            └── lid.176.ftz\n```\n\n## Report Issue\n\nNote: Please update ComfyUI first ([guide](https://docs.comfy.org/installation/update_comfyui)) and pick a weight repo in the FireRedTTS3 Load Model node (`FireRedTTS3-bf16` recommended); it downloads automatically when `download_if_missing` is on.\n\n- This node pack [issues](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/issues)\n"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 12,
+      "type": "FireRedTTS3AcousticEdit",
+      "pos": [
+        580.8624580142852,
+        810.4263486316124
+      ],
+      "size": [
+        400,
+        300
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "firered_model",
+          "type": "FIREREDTTS3_MODEL",
+          "link": 12
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3AcousticEdit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "speed",
+        0.5,
+        10,
+        1.2,
+        0.5,
+        1278959181,
+        "randomize",
+        64,
+        "make it faster"
+      ],
+      "widgets_values_named": {
+        "mode": "speed",
+        "value": 0.5,
+        "n_timesteps": 10,
+        "inference_cfg": 1.2,
+        "stop_threshold": 0.5,
+        "seed": 1278959181,
+        "control_after_generate": "randomize",
+        "max_audio_seconds": 64,
+        "custom_instruction": "make it faster"
+      }
+    },
+    {
+      "id": 2,
+      "type": "MarkdownNote",
+      "pos": [
+        -312.3426062885175,
+        19.000081815010354
+      ],
+      "size": [
+        437.0386339853976,
+        677.1582018063007
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "‎",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## FireRedTTS3\n\n[FireRedTTS3](https://github.com/FireRedTeam/FireRedTTS3) is FireRed Team's unified speech generation and editing model. It does zero-shot voice cloning across **24 languages and 21 Chinese dialects**, and the Instruct variant adds natural-language **voice design** plus **semantic and acoustic speech editing** in one model.\n\n## ComfyUI links\n- [Saganaki22/FireRedTTS3-ComfyUI](https://github.com/Saganaki22/FireRedTTS3-ComfyUI)\n- [🤗 drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16)\n\n## About this workflow\n\nThis template runs **zero-shot voice cloning** with the `FireRedTTS3VoiceClone` node: a short reference clip plus its transcript is turned into new speech in the same voice.\n\n**Key inputs**\n\n- **repo**: weight source in the loader — `FireRedTTS3-bf16` (recommended, official-equivalent mixed precision), `FireRedTTS3-int8` (int8 ConvRot, smallest), or `FireRedTTS3-fp32` (official)\n- **variant**: `fireredtts3_instruct` (default; cloning + design + editing) or `fireredtts3_base` (cloning with explicit language/dialect tags)\n- **prompt_audio / prompt_text**: a clean 5–20s reference clip and its exact transcript. The `FireRedTTS3WhisperTranscribe` node produces the transcript and passes the audio through; wire `audio` → `prompt_audio`, and right-click the clone node to convert `prompt_text` to an input for the `transcript`\n- **language**: `auto` detects via FastText (24 languages), or pick any of the 24 languages / 21 Chinese dialects explicitly. Match the reference clip's language for best cloning\n- **seed / n_timesteps / inference_cfg / stop_threshold**: official defaults are 10 flow steps, CFG 2.0 for cloning (1.2 for design/edits), stop threshold 0.5\n\n**Notes**\n\n- Voice Design, Semantic Edit, and Acoustic Edit require the `fireredtts3_instruct` variant; the node error tells you exactly what to switch if the wrong variant is connected\n- Long text is split into sentences and cross-faded automatically (`do_split`), with local wetext normalization for numbers/dates in Chinese and English (`do_tn`)\n- Reference audio longer than ~655 seconds is rejected (RedAE encoder limit); 5–20s clones best\n- bf16 and int8 checkpoints produce output matching the official fp32 model; int8 roughly halves VRAM in exchange for ~30% slower generation"
+      ],
+      "widgets_values_named": {
+        "text": "## FireRedTTS3\n\n[FireRedTTS3](https://github.com/FireRedTeam/FireRedTTS3) is FireRed Team's unified speech generation and editing model. It does zero-shot voice cloning across **24 languages and 21 Chinese dialects**, and the Instruct variant adds natural-language **voice design** plus **semantic and acoustic speech editing** in one model.\n\n## ComfyUI links\n- [Saganaki22/FireRedTTS3-ComfyUI](https://github.com/Saganaki22/FireRedTTS3-ComfyUI)\n- [🤗 drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16)\n\n## About this workflow\n\nThis template runs **zero-shot voice cloning** with the `FireRedTTS3VoiceClone` node: a short reference clip plus its transcript is turned into new speech in the same voice.\n\n**Key inputs**\n\n- **repo**: weight source in the loader — `FireRedTTS3-bf16` (recommended, official-equivalent mixed precision), `FireRedTTS3-int8` (int8 ConvRot, smallest), or `FireRedTTS3-fp32` (official)\n- **variant**: `fireredtts3_instruct` (default; cloning + design + editing) or `fireredtts3_base` (cloning with explicit language/dialect tags)\n- **prompt_audio / prompt_text**: a clean 5–20s reference clip and its exact transcript. The `FireRedTTS3WhisperTranscribe` node produces the transcript and passes the audio through; wire `audio` → `prompt_audio`, and right-click the clone node to convert `prompt_text` to an input for the `transcript`\n- **language**: `auto` detects via FastText (24 languages), or pick any of the 24 languages / 21 Chinese dialects explicitly. Match the reference clip's language for best cloning\n- **seed / n_timesteps / inference_cfg / stop_threshold**: official defaults are 10 flow steps, CFG 2.0 for cloning (1.2 for design/edits), stop threshold 0.5\n\n**Notes**\n\n- Voice Design, Semantic Edit, and Acoustic Edit require the `fireredtts3_instruct` variant; the node error tells you exactly what to switch if the wrong variant is connected\n- Long text is split into sentences and cross-faded automatically (`do_split`), with local wetext normalization for numbers/dates in Chinese and English (`do_tn`)\n- Reference audio longer than ~655 seconds is rejected (RedAE encoder limit); 5–20s clones best\n- bf16 and int8 checkpoints produce output matching the official fp32 model; int8 roughly halves VRAM in exchange for ~30% slower generation"
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 10,
+      "type": "FireRedTTS3SemanticEdit",
+      "pos": [
+        579.6640443304938,
+        497.10792634486864
+      ],
+      "size": [
+        400,
+        252
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "firered_model",
+          "type": "FIREREDTTS3_MODEL",
+          "link": 8
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 9
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            10
+          ]
+        },
+        {
+          "name": "edited_text",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3SemanticEdit",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Replace 'pot' with 'dogs'.",
+        10,
+        1.2,
+        0.5,
+        511449185,
+        "randomize",
+        64
+      ],
+      "widgets_values_named": {
+        "instruction": "Replace 'pot' with 'dogs'.",
+        "n_timesteps": 10,
+        "inference_cfg": 1.2,
+        "stop_threshold": 0.5,
+        "seed": 511449185,
+        "control_after_generate": "randomize",
+        "max_audio_seconds": 64
+      }
+    },
+    {
+      "id": 8,
+      "type": "FireRedTTS3VoiceDesign",
+      "pos": [
+        580.7910033581774,
+        -34.31327467075334
+      ],
+      "size": [
+        400,
+        474
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "firered_model",
+          "type": "FIREREDTTS3_MODEL",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "voice_plan",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3VoiceDesign",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "A gentle young female voice, speaking a little slowly, with a playful touch.",
+        "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
+        "auto",
+        0.7,
+        0.8,
+        20,
+        1,
+        10,
+        1.2,
+        1751138165,
+        "randomize",
+        64,
+        true,
+        true,
+        50
+      ],
+      "widgets_values_named": {
+        "instruction": "A gentle young female voice, speaking a little slowly, with a playful touch.",
+        "text": "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
+        "language": "auto",
+        "text_temperature": 0.7,
+        "text_top_p": 0.8,
+        "text_top_k": 20,
+        "text_repetition_penalty": 1,
+        "n_timesteps": 10,
+        "inference_cfg": 1.2,
+        "seed": 1751138165,
+        "control_after_generate": "randomize",
+        "max_audio_seconds": 64,
+        "do_tn": true,
+        "do_split": true,
+        "cross_fade_ms": 50
+      }
+    },
+    {
+      "id": 4,
+      "type": "FireRedTTS3VoiceClone",
+      "pos": [
+        581.4137867752265,
+        -499.35517531328424
+      ],
+      "size": [
+        400,
+        402
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "firered_model",
+          "type": "FIREREDTTS3_MODEL",
+          "link": 1
+        },
+        {
+          "name": "prompt_audio",
+          "type": "AUDIO",
+          "link": 4
+        },
+        {
+          "name": "prompt_text",
+          "type": "STRING",
+          "widget": {
+            "name": "prompt_text"
+          },
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3VoiceClone",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
+        "",
+        "auto",
+        10,
+        2,
+        0.5,
+        1926366737,
+        "randomize",
+        64,
+        true,
+        true,
+        50
+      ],
+      "widgets_values_named": {
+        "text": "Hello! This is FireRedTTS3 running natively inside ComfyUI.",
+        "prompt_text": "",
+        "language": "auto",
+        "n_timesteps": 10,
+        "inference_cfg": 2,
+        "stop_threshold": 0.5,
+        "seed": 1926366737,
+        "control_after_generate": "randomize",
+        "max_audio_seconds": 64,
+        "do_tn": true,
+        "do_split": true,
+        "cross_fade_ms": 50
+      }
+    },
+    {
+      "id": 6,
+      "type": "LoadAudio",
+      "pos": [
+        186.18947454811487,
+        271.886624396247
+      ],
+      "size": [
+        282.798828125,
+        136
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "LoadAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "brian-griffin.wav",
+        null,
+        null
+      ],
+      "widgets_values_named": {
+        "audio": "brian-griffin.wav",
+        "upload": null
+      }
+    },
+    {
+      "id": 3,
+      "type": "FireRedTTS3LoadModel",
+      "pos": [
+        189.02797737260485,
+        41.64928857261954
+      ],
+      "size": [
+        281.9140625,
+        178
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "firered_model",
+          "type": "FIREREDTTS3_MODEL",
+          "links": [
+            1,
+            6,
+            8,
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3LoadModel",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "FireRedTTS3-bf16",
+        "fireredtts3_instruct",
+        "auto",
+        "auto",
+        "flash_attention",
+        false
+      ],
+      "widgets_values_named": {
+        "repo": "FireRedTTS3-bf16",
+        "variant": "fireredtts3_instruct",
+        "dtype": "auto",
+        "device": "auto",
+        "attention": "flash_attention",
+        "download_if_missing": false
+      }
+    },
+    {
+      "id": 7,
+      "type": "FireRedTTS3WhisperTranscribe",
+      "pos": [
+        183.80984765483507,
+        462.73211475923347
+      ],
+      "size": [
+        295.0144912050756,
+        198
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            4,
+            9,
+            11
+          ]
+        },
+        {
+          "name": "transcript",
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FireRedTTS3WhisperTranscribe",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "whisper-large-v3-turbo",
+        "auto",
+        "auto",
+        "transcribe",
+        30,
+        false
+      ],
+      "widgets_values_named": {
+        "model": "whisper-large-v3-turbo",
+        "dtype": "auto",
+        "language": "auto",
+        "task": "transcribe",
+        "chunk_length_s": 30,
+        "download_if_missing": false
+      }
+    },
+    {
+      "id": 11,
+      "type": "PreviewAudio",
+      "pos": [
+        1067.9954552558331,
+        377.3235779448105
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PreviewAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 13,
+      "type": "PreviewAudio",
+      "pos": [
+        1069.1790990727588,
+        523.6776684376475
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 13
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PreviewAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 9,
+      "type": "PreviewAudio",
+      "pos": [
+        1067.8914766520793,
+        222.77848854384428
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PreviewAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 5,
+      "type": "PreviewAudio",
+      "pos": [
+        1066.171988671785,
+        70.50672103335354
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "PreviewAudio",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    }
+  ],
+  "links": [
+    [
+      1,
+      3,
+      0,
+      4,
+      0,
+      "FIREREDTTS3_MODEL"
+    ],
+    [
+      2,
+      4,
+      0,
+      5,
+      0,
+      "AUDIO"
+    ],
+    [
+      3,
+      6,
+      0,
+      7,
+      0,
+      "AUDIO"
+    ],
+    [
+      4,
+      7,
+      0,
+      4,
+      1,
+      "AUDIO"
+    ],
+    [
+      5,
+      7,
+      1,
+      4,
+      2,
+      "STRING"
+    ],
+    [
+      6,
+      3,
+      0,
+      8,
+      0,
+      "FIREREDTTS3_MODEL"
+    ],
+    [
+      7,
+      8,
+      0,
+      9,
+      0,
+      "AUDIO"
+    ],
+    [
+      8,
+      3,
+      0,
+      10,
+      0,
+      "FIREREDTTS3_MODEL"
+    ],
+    [
+      9,
+      7,
+      0,
+      10,
+      1,
+      "AUDIO"
+    ],
+    [
+      10,
+      10,
+      0,
+      11,
+      0,
+      "AUDIO"
+    ],
+    [
+      11,
+      7,
+      0,
+      12,
+      1,
+      "AUDIO"
+    ],
+    [
+      12,
+      3,
+      0,
+      12,
+      0,
+      "FIREREDTTS3_MODEL"
+    ],
+    [
+      13,
+      12,
+      0,
+      13,
+      0,
+      "AUDIO"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Load / Preprocess",
+      "bounding": [
+        173.80984765483507,
+        -28.350711427380464,
+        315.0144912050756,
+        699.082826186614
+      ],
+      "color": "#b58b2a",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Sample",
+      "bounding": [
+        569.6640443304938,
+        -569.3551753132841,
+        421.74974244473276,
+        1689.7815239448964
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "‎Output",
+      "bounding": [
+        1056.171988671785,
+        0.5067210333535668,
+        293.00711040097394,
+        621.1709474042941
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "ds": {
+      "scale": 0.598950000000001,
+      "offset": [
+        1174.6522432120494,
+        896.0675233341161
+      ]
+    },
+    "links_added_by_ue": [],
+    "frontendVersion": "1.49.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

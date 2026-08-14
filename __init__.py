@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = "v0.1.0"
+__version__ = "v0.2.0"
 
 import importlib.metadata as _metadata
 import importlib.util
@@ -11,11 +11,11 @@ import sys
 import types
 from typing import Any
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 logger.propagate = False
 if not logger.handlers:
     _handler = logging.StreamHandler()
-    _handler.setFormatter(logging.Formatter("[FireRedTTS3-ComfyUI] %(message)s"))
+    _handler.setFormatter(logging.Formatter("[FireRedTTS3] %(message)s"))
     logger.addHandler(_handler)
 logger.setLevel(logging.INFO)
 

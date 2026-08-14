@@ -42,7 +42,7 @@ try:
 except ImportError:
     tqdm = None
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 
 SAMPLE_RATE = 24_000
 REDAE_SCALE = 0.4
@@ -585,7 +585,9 @@ class RedAE(nn.Module):
             num_key_value_heads=config.get("dec_num_key_value_heads", 2),
             sliding_window=config.get("dec_sliding_window", 64),
             use_sliding_window=config.get("dec_use_sliding_window", True),
-            attn_implementation=attn_implementation,
+            # The decoder always runs fp32 (same as upstream); FlashAttention only
+            # accepts fp16/bf16, so the decoder keeps sdpa regardless of choice.
+            attn_implementation="sdpa",
         )
         self.autocast_bf16 = True
 
@@ -614,6 +616,7 @@ class RedAE(nn.Module):
             audio = audio[:1]
             audio = torchaudio.functional.resample(audio, audio_sr, self.sample_rate)
             audio = self.pad_to_multiple_of(audio, self.downsample_rate)
+            self._enforce_input_limit(audio)
             return self.encoder(audio.to(device))
 
     @torch.no_grad()
@@ -624,6 +627,29 @@ class RedAE(nn.Module):
     @property
     def out_device(self):
         return torch.device(getattr(self, "_firered_runtime_device", next(self.parameters()).device))
+
+    @property
+    def max_input_seconds(self) -> float:
+        return self.encoder.qwen3_config.max_position_embeddings / (
+            self.sample_rate / self.encoder.audio_patch_size
+        )
+
+    def _enforce_input_limit(self, audio: torch.Tensor) -> None:
+        frames = audio.shape[-1] // self.encoder.audio_patch_size
+        max_positions = self.encoder.qwen3_config.max_position_embeddings
+        if frames > max_positions:
+            raise RuntimeError(
+                f"Input audio is {audio.shape[-1] / self.sample_rate:.0f}s, but the RedAE encoder supports at most "
+                f"{self.max_input_seconds:.0f}s ({max_positions} positions at "
+                f"{self.sample_rate // self.encoder.audio_patch_size} Hz). Trim the clip; a clean 5-20s "
+                f"reference clones best."
+            )
+        seconds = audio.shape[-1] / self.sample_rate
+        if seconds > 120:
+            logger.warning(
+                "Input audio is %.0fs; long references raise VRAM use and can reduce cloning quality (5-20s is ideal).",
+                seconds,
+            )
 
 
 # --------------------------------------------------------------------------- #
@@ -856,8 +882,12 @@ def _backbone_config(attn_implementation: str):
     from transformers import Qwen3Config
 
     cfg = dict(QWEN3_1_7B_CONFIG)
-    cfg["attn_implementation"] = attn_implementation
-    return Qwen3Config.from_dict(cfg)
+    cfg.pop("attn_implementation", None)
+    config = Qwen3Config.from_dict(cfg)
+    # from_dict drops attn_implementation; the setter is what reaches the
+    # runtime attention dispatch (verified: kernels fire only via this path).
+    config._attn_implementation = attn_implementation
+    return config
 
 
 class FireRedTTS3BaseCore(nn.Module):
@@ -945,7 +975,7 @@ class FireRedTTS3BaseCore(nn.Module):
         backbone_cache = None
         max_gen_steps = 400 if max_gen_steps is None else max_gen_steps
         terminal_progress = None
-        if progress_callback is None and tqdm is not None:
+        if tqdm is not None:
             terminal_progress = tqdm(total=max_gen_steps, desc="FireRedTTS3 patches", unit="patch",
                                      ascii=False, dynamic_ncols=True, leave=True)
         try:
@@ -1116,7 +1146,7 @@ class FireRedTTS3InstructCore(nn.Module):
         backbone_cond = input_embeds.new_zeros(1, self.history_patches, input_embeds.shape[-1])
         max_gen_steps = 400 if max_gen_steps is None else max_gen_steps
         terminal_progress = None
-        if progress_callback is None and tqdm is not None:
+        if tqdm is not None:
             terminal_progress = tqdm(total=max_gen_steps, desc="FireRedTTS3 patches", unit="patch",
                                      ascii=False, dynamic_ncols=True, leave=True)
         try:
@@ -1297,13 +1327,17 @@ def convert_modules_for_comfy(model: nn.Module) -> None:
 
 
 def set_runtime_dtype(module: nn.Module, dtype: torch.dtype) -> None:
-    """Tag floating tensors with the dtype Comfy/AIMDO should materialize."""
+    """Tag floating tensors with the dtype Comfy/AIMDO should materialize.
+
+    INT8 ConvRot weights are never tagged (not floating), and per-row weight
+    scales stay fp32 so the quantized kernels receive exact scales.
+    """
     for sub in module.modules():
         for name, value in sub.named_parameters(recurse=False):
-            if value is not None and value.is_floating_point() and not name.endswith("inv_freq"):
+            if value is not None and value.is_floating_point() and not name.endswith("inv_freq") and not name.endswith("weight_scale"):
                 setattr(sub, f"{name}_comfy_model_dtype", dtype)
         for name, value in sub.named_buffers(recurse=False):
-            if value is not None and value.is_floating_point() and not name.endswith("inv_freq"):
+            if value is not None and value.is_floating_point() and not name.endswith("inv_freq") and not name.endswith("weight_scale"):
                 setattr(sub, f"{name}_comfy_model_dtype", dtype)
 
 
@@ -1353,12 +1387,20 @@ def _set_tensor(module: nn.Module, name: str, tensor: torch.Tensor, dtype: torch
 
 def load_safetensors_into(model: nn.Module, model_dir: Path,
                           dtype_policy=None, ignore_missing: tuple[str, ...] = ()) -> None:
-    """Load every tensor in model_dir into model, casting floats per dtype_policy(name)."""
+    """Load every tensor in model_dir into model, casting floats per dtype_policy(name).
+
+    Keys ending in .comfy_quant are quantization metadata consumed by the int8
+    runtime (see int8.py), never module tensors; they are skipped here.
+    """
     param_names = set(dict(model.named_parameters(remove_duplicate=False)))
     buffer_names = set(dict(model.named_buffers(remove_duplicate=False)))
     loaded: set[str] = set()
     unexpected: list[str] = []
+    quant_meta = 0
     for name, tensor in iter_safetensor_items(model_dir):
+        if name.endswith(".comfy_quant"):
+            quant_meta += 1
+            continue
         if name not in param_names and name not in buffer_names:
             unexpected.append(name)
             continue
@@ -1373,6 +1415,8 @@ def load_safetensors_into(model: nn.Module, model_dir: Path,
         raise RuntimeError(f"Weights missing from {model_dir}: {len(missing)} tensor(s), first: {missing[:8]}")
     if unexpected:
         logger.debug("Ignored %d unexpected tensor(s) from %s, first: %s", len(unexpected), model_dir, unexpected[:8])
+    if quant_meta:
+        logger.debug("Consumed %d comfy_quant metadata entries from %s.", quant_meta, model_dir)
     _materialize_buffers(model)
     model.eval()
     for parameter in model.parameters():
@@ -1647,23 +1691,3 @@ def acoustic_edit_one(bundle: Any, *, instruction: str, latents_in: torch.Tensor
         )
         gen_audio, gen_audio_sr = bundle.redae.decode(gen_latents / REDAE_SCALE)
     return gen_audio, gen_audio_sr
-
-
-def redae_encode_latents(bundle: Any, audio: torch.Tensor, audio_sr: int) -> torch.Tensor:
-    """Standalone RedAE encode for the codec nodes. Returns raw fp32 latents (1, t, 64)."""
-    redae = bundle.redae
-    if audio.ndim == 1:
-        audio = audio.unsqueeze(0)
-    audio = audio[:1]
-    audio = torchaudio.functional.resample(audio, audio_sr, redae.sample_rate)
-    audio = redae.pad_to_multiple_of(audio, redae.downsample_rate)
-    audio = audio.to(bundle.device)
-    with torch.inference_mode(), attention_runtime(bundle.attention):
-        latents = redae.encode(audio, redae.sample_rate)
-    return latents.to(torch.float32).cpu()
-
-
-def redae_decode_audio(bundle: Any, latents: torch.Tensor) -> tuple[torch.Tensor, int]:
-    with torch.inference_mode(), attention_runtime(bundle.attention):
-        audio, audio_sr = bundle.redae.decode(latents.to(torch.float32))
-    return audio.cpu(), audio_sr

@@ -11,18 +11,21 @@ from typing import Any
 
 import torch
 
+from . import int8
 from . import native
 from .frontend import FASTTEXT_FILENAME, FASTTEXT_URL, FastTextLangDetector, TextFrontend
 from .tokenizer import load_text_tokenizer
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 
 MODEL_FOLDER_NAME = "fireredtts3"
 OFFICIAL_REPO_ID = "FireRedTeam/FireRedTTS3"
 BF16_REPO_ID = "drbaph/FireRedTTS3-bf16"
-OFFICIAL_REPO_LABEL = "FireRedTTS3 fp32 - FireRedTeam (auto-download)"
-BF16_REPO_LABEL = "FireRedTTS3 bf16 - drbaph (auto-download)"
-REPO_CHOICES = {BF16_REPO_LABEL: BF16_REPO_ID, OFFICIAL_REPO_LABEL: OFFICIAL_REPO_ID}
+INT8_REPO_ID = "drbaph/FireRedTTS3-int8"
+OFFICIAL_REPO_LABEL = "FireRedTTS3-fp32"
+BF16_REPO_LABEL = "FireRedTTS3-bf16"
+INT8_REPO_LABEL = "FireRedTTS3-int8"
+REPO_CHOICES = {BF16_REPO_LABEL: BF16_REPO_ID, INT8_REPO_LABEL: INT8_REPO_ID, OFFICIAL_REPO_LABEL: OFFICIAL_REPO_ID}
 HF_ENDPOINT = "https://huggingface.co"
 
 VARIANTS = ["fireredtts3_base", "fireredtts3_instruct"]
@@ -73,13 +76,25 @@ def _empty_accelerator_cache() -> None:
         torch.xpu.empty_cache()
 
 
-def model_dir() -> Path:
+def model_dirs() -> list[Path]:
+    """All registered fireredtts3 folders (extra_model_paths.yaml aware), primary first."""
     try:
         import folder_paths
 
-        base = Path(folder_paths.models_dir) / MODEL_FOLDER_NAME
+        primary = Path(folder_paths.models_dir) / MODEL_FOLDER_NAME
+        paths = [Path(p) for p in folder_paths.get_folder_paths(MODEL_FOLDER_NAME)]
+        if primary not in paths:
+            paths.insert(0, primary)
+        if paths:
+            return paths
     except Exception:
-        base = Path(__file__).resolve().parent / "models" / MODEL_FOLDER_NAME
+        pass
+    return [Path(__file__).resolve().parent / "models" / MODEL_FOLDER_NAME]
+
+
+def model_dir() -> Path:
+    """Primary fireredtts3 folder: lookup starts here and downloads land here."""
+    base = model_dirs()[0]
     base.mkdir(parents=True, exist_ok=True)
     return base
 
@@ -91,7 +106,7 @@ def register_model_folder() -> None:
         base = str(model_dir())
         if MODEL_FOLDER_NAME not in folder_paths.folder_names_and_paths:
             folder_paths.add_model_folder_path(MODEL_FOLDER_NAME, base)
-        logger.info("FireRedTTS3 model folder registered: %s", base)
+            logger.info("model folder registered: %s", base)
     except Exception:
         pass
 
@@ -112,35 +127,24 @@ def _has_component_files(path: Path, variant: str) -> bool:
 
 
 def get_repo_choices() -> list[str]:
-    choices = list(REPO_CHOICES)
-    try:
-        for entry in sorted(model_dir().iterdir()):
-            if entry.is_dir() and (entry / "redae").is_dir() and (entry / "text_tokenizer").is_dir():
-                label = f"local: {entry.name}"
-                if label not in choices:
-                    choices.append(label)
-    except OSError:
-        pass
-    return choices
+    return list(REPO_CHOICES)
 
 
 def _resolve_repo_dir(repo_choice: str) -> tuple[Path, str | None]:
-    """Returns (directory, repo_id or None for a local folder)."""
+    """Returns (directory, repo_id or None when the name is not downloadable)."""
     if repo_choice in REPO_CHOICES:
-        return model_dir() / _safe_repo_name(REPO_CHOICES[repo_choice]), REPO_CHOICES[repo_choice]
-    if repo_choice.startswith("local: "):
-        return model_dir() / repo_choice[len("local: "):], None
-    # Bare folder name or repo id typed into the combo.
-    candidate = model_dir() / repo_choice
-    if candidate.is_dir():
-        return candidate, None
-    return model_dir() / _safe_repo_name(repo_choice), repo_choice
+        repo_id = REPO_CHOICES[repo_choice]
+        return model_dir() / _safe_repo_name(repo_id), repo_id
+    if "/" in repo_choice:
+        # repo id typed directly
+        return model_dir() / _safe_repo_name(repo_choice), repo_choice
+    return model_dir() / repo_choice, None
 
 
 def _download_model_files(repo_id: str, variant: str, dest: Path) -> None:
     from huggingface_hub import snapshot_download
 
-    logger.info("Downloading FireRedTTS3 %s weights from %s to %s. This is a large download.", variant, repo_id, dest)
+    logger.info("Downloading %s weights from %s to %s (large download).", variant, repo_id, dest)
     dest.mkdir(parents=True, exist_ok=True)
     snapshot_download(
         repo_id=repo_id,
@@ -152,14 +156,18 @@ def _download_model_files(repo_id: str, variant: str, dest: Path) -> None:
 
 def resolve_model_dir(repo_choice: str, variant: str, download_if_missing: bool) -> Path:
     repo_dir, repo_id = _resolve_repo_dir(repo_choice)
-    if not _has_component_files(repo_dir, variant):
-        if repo_id is None:
-            raise FileNotFoundError(f"Local FireRedTTS3 folder is missing {variant}/redae/tokenizer files: {repo_dir}")
-        if not download_if_missing:
-            raise FileNotFoundError(
-                f"FireRedTTS3 files for {variant} not found in {repo_dir}. Enable download_if_missing."
-            )
-        _download_model_files(repo_id, variant, repo_dir)
+    # Use an existing complete copy from any registered fireredtts3 path (extra_model_paths, symlinks).
+    for base in model_dirs():
+        candidate = base / repo_dir.name
+        if _has_component_files(candidate, variant):
+            return candidate
+    if repo_id is None:
+        raise FileNotFoundError(f"'{repo_choice}' does not contain a complete FireRedTTS3 {variant} setup: {repo_dir}")
+    if not download_if_missing:
+        raise FileNotFoundError(
+            f"{repo_choice} weights for {variant} are not in {repo_dir}. Enable download_if_missing to fetch them."
+        )
+    _download_model_files(repo_id, variant, repo_dir)
     if not _has_component_files(repo_dir, variant):
         raise RuntimeError(f"Download finished but FireRedTTS3 files are still incomplete in {repo_dir}.")
     return repo_dir
@@ -234,10 +242,24 @@ def resolve_dtype_mode(dtype_name: str, device: torch.device) -> str:
     raise ValueError(f"Unsupported dtype: {dtype_name}")
 
 
-def resolve_attention(attention: str) -> str:
-    """Returns the transformers attn_implementation; sage runs as an sdpa patch."""
-    if attention in {"auto", "sdpa", "sageattention"}:
-        if attention == "sageattention" and importlib.util.find_spec("sageattention") is None:
+def resolve_attention(attention: str, device: torch.device, dtype_mode: str) -> str:
+    """Returns the transformers attn_implementation; sage runs as an sdpa patch.
+
+    auto matches upstream: flash_attention_2 when it can actually run (flash_attn
+    installed, CUDA device, bf16 compute), sdpa otherwise. The fp32 decoder
+    always stays on sdpa regardless (see native.RedAE).
+    """
+    flash_usable = (
+        importlib.util.find_spec("flash_attn") is not None
+        and torch.device(device).type == "cuda"
+        and dtype_mode != "fp32"
+    )
+    if attention == "auto":
+        return "flash_attention_2" if flash_usable else "sdpa"
+    if attention == "sdpa":
+        return "sdpa"
+    if attention == "sageattention":
+        if importlib.util.find_spec("sageattention") is None:
             raise ImportError("sageattention was selected, but sageattention is not installed.")
         return "sdpa"
     if attention == "flash_attention":
@@ -377,11 +399,6 @@ def register_runtime_module(module: torch.nn.Module, device: torch.device, *, dy
     _register_many_with_comfy([patcher])
     if not patcher.is_dynamic():
         _set_module_device_if_writable(module, device)
-    logger.info(
-        "Registered %s with ComfyUI%s memory management.",
-        module.__class__.__name__,
-        "/AIMDO" if patcher.is_dynamic() else "",
-    )
     return patcher
 
 
@@ -410,7 +427,7 @@ def unload_firered_bundle(bundle: FireRedBundle | None, reason: str = "manual un
     global _ACTIVE_BUNDLE, _ACTIVE_LOAD_KEY
     if bundle is None:
         return
-    logger.info("Unloading FireRedTTS3 bundle (%s).", reason)
+    logger.info("Unloading bundle (%s).", reason)
     for patcher in list(bundle.patchers):
         unload_runtime_module(patcher, hard=hard)
     modules = [bundle.core, bundle.redae] + ([bundle.campp] if bundle.campp is not None else [])
@@ -444,7 +461,9 @@ def unload_firered_bundle(bundle: FireRedBundle | None, reason: str = "manual un
 
 
 def _core_dtype_policy(mode: str):
-    def policy(name: str) -> torch.dtype:
+    def policy(name: str) -> torch.dtype | None:
+        if name.endswith("weight_scale"):
+            return None  # INT8 ConvRot per-row scales must stay fp32
         if mode == "bf16" and name.startswith("backbone_llm."):
             return torch.bfloat16
         return torch.float32
@@ -453,7 +472,9 @@ def _core_dtype_policy(mode: str):
 
 
 def _redae_dtype_policy(mode: str):
-    def policy(name: str) -> torch.dtype:
+    def policy(name: str) -> torch.dtype | None:
+        if name.endswith("weight_scale"):
+            return None
         if mode == "bf16" and name.startswith("encoder."):
             return torch.bfloat16
         return torch.float32
@@ -493,6 +514,37 @@ def _build_modules(repo_dir: Path, variant: str, attn_impl: str):
     return core, redae
 
 
+def _log_int8_banner(core: torch.nn.Module, device: torch.device) -> None:
+    """Print the one-time INT8 ConvRot status block, including a live kernel smoke test."""
+    import comfy_kitchen
+    from comfy_kitchen.tensor import TensorWiseINT8Layout
+
+    qparams, qcount = int8.quantized_parameter_count(core)
+    group_sizes = sorted({m.convrot_groupsize for m in core.modules() if isinstance(m, int8.ConvRotInt8Linear)})
+    smoke = "SKIPPED (cpu)"
+    if device.type in ("cuda", "xpu"):
+        try:
+            g = group_sizes[0]
+            w = torch.randn(64, g * 2, device=device)
+            q, p = TensorWiseINT8Layout.quantize(
+                w, is_weight=True, per_channel=True, convrot=True, convrot_groupsize=g, stochastic_rounding=0
+            )
+            y = comfy_kitchen.int8_linear(
+                torch.randn(8, g * 2, device=device), q, p.scale, None,
+                out_dtype=torch.bfloat16, convrot=True, convrot_groupsize=g,
+            )
+            smoke = "PASS" if bool(torch.isfinite(y).all()) else "FAIL"
+        except Exception as exc:
+            smoke = f"FAIL ({exc})"
+    backends = ",".join(sorted(k for k, v in comfy_kitchen.list_backends().items() if v["available"]))
+    logger.info(
+        "INT8 ConvRot: %d layers / %.2fB params / group %s / comfy_kitchen.int8_linear / backends %s / runtime smoke %s",
+        qcount, qparams / 1e9, group_sizes, backends, smoke,
+    )
+    if smoke.startswith("FAIL"):
+        raise RuntimeError(f"INT8 ConvRot kernel smoke test failed on {device}: {smoke}")
+
+
 def load_firered_bundle(
     repo_choice: str,
     variant: str,
@@ -510,7 +562,11 @@ def load_firered_bundle(
     runtime_dir = resolve_model_dir(repo_choice, variant, download_if_missing)
     device = resolve_device(device_name)
     dtype_mode = resolve_dtype_mode(dtype_name, device)
-    attn_impl = resolve_attention(attention)
+    attn_impl = resolve_attention(attention, device, dtype_mode)
+    if attn_impl == "flash_attention_2" and dtype_mode == "fp32":
+        # Only reachable via an explicit flash_attention choice; auto avoids it.
+        logger.warning("flash_attention needs bf16 compute; using sdpa because dtype=fp32 was selected.")
+        attn_impl = "sdpa"
     variant_short = "base" if variant == "fireredtts3_base" else "instruct"
 
     model_file = runtime_dir / variant / "model.safetensors"
@@ -529,7 +585,7 @@ def load_firered_bundle(
         unload_firered_bundle(_ACTIVE_BUNDLE, reason="load settings changed")
 
     logger.info(
-        "Loading FireRedTTS3 %s from %s on %s with dtype=%s attention=%s",
+        "Loading %s from %s on %s (%s, %s)",
         variant, runtime_dir, device, dtype_mode, attn_impl,
     )
 
@@ -542,6 +598,10 @@ def load_firered_bundle(
         core, redae = _build_modules(runtime_dir, variant, attn_impl)
     # CAM++ is tiny (29 MB); build it eagerly so load_state_dict lands on real tensors.
     campp = native.CamppEmbedding() if variant == "fireredtts3_base" else None
+
+    quant_map = int8.scan_checkpoint_quantization(runtime_dir / variant)
+    if quant_map:
+        int8.replace_quantized_linears(core, quant_map)
 
     try:
         native.load_safetensors_into(core, runtime_dir / variant, dtype_policy=_core_dtype_policy(dtype_mode),
@@ -567,7 +627,7 @@ def load_firered_bundle(
         try:
             use_dynamic = dynamic_vram_active(device)
             if use_dynamic:
-                logger.info("AIMDO DynamicVRAM is active; using dynamic patchers for FireRedTTS3 modules.")
+                logger.info("AIMDO DynamicVRAM is active; using dynamic patchers.")
             else:
                 logger.info("AIMDO not active; using static ComfyUI memory management.")
             for module in (core, redae) + ((campp,) if campp is not None else ()):
@@ -593,6 +653,9 @@ def load_firered_bundle(
         fasttext_path = ensure_fasttext_model(download_if_missing)
         detector = FastTextLangDetector(fasttext_path) if fasttext_path is not None else None
         frontend = TextFrontend(use_wetext=True, fasttext_detector=detector)
+
+        if quant_map:
+            _log_int8_banner(core, device)
 
         bundle = FireRedBundle(
             variant=variant_short,

@@ -1,7 +1,7 @@
 [project]
 name = "FireRedTTS3-ComfyUI"
 description = "ComfyUI custom nodes for FireRedTTS3: zero-shot voice cloning (24 languages + 21 Chinese dialects), voice design, and speech editing, with native inference and AIMDO DynamicVRAM support"
-version = "0.1.0"
+version = "0.2.0"
 license = {file = "LICENSE"}
 dependencies = [
     "accelerate",
@@ -23,6 +23,7 @@ frontend = [
 Repository = "https://github.com/Saganaki22/FireRedTTS3-ComfyUI"
 Model = "https://huggingface.co/FireRedTeam/FireRedTTS3"
 Model_bf16 = "https://huggingface.co/drbaph/FireRedTTS3-bf16"
+Model_int8 = "https://huggingface.co/drbaph/FireRedTTS3-int8"
 
 [tool.comfy]
 PublisherId = "saganaki22"

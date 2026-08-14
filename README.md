@@ -2,7 +2,7 @@
 
 **English** | **[中文](./README_zh.md)**
 
-**Version: v0.1.0**
+**Version: v0.2.0**
 
 ComfyUI nodes for [FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3): zero-shot voice cloning across 24 languages and 21 Chinese dialects, instruction-based voice design, semantic + acoustic speech editing, Whisper reference transcription, and ComfyUI/AIMDO DynamicVRAM support.
 
@@ -25,6 +25,7 @@ ComfyUI nodes for [FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/F
 - **AIMDO DynamicVRAM support** - Core, codec, and speaker encoder are registered as separate ComfyUI models with castable weights, paging through ComfyUI/AIMDO when DynamicVRAM is active.
 - **bf16 mirror** - Optional half-size weights with official-equivalent mixed precision: the backbone LLM and RedAE encoder are stored in bf16 (the official code already computes them under bf16 autocast), while the flow head and RedAE decoder stay fp32. Same-seed A/B testing against the official fp32 weights produced identical waveforms (cosine 1.0000, SNR > 80 dB).
 - **Whisper transcription node** - Turns a reference clip into the `prompt_text` transcript that noticeably improves cloning.
+- **INT8 ConvRot core (experimental)** - `tools/quantize_fireredtts3_int8_convrot.py` converts the core transformer linears to Comfy INT8 ConvRot (format `int8_tensorwise`, per-row fp32 scales, offline Hadamard weight rotation, group size 256) using the official comfy-kitchen quantizer. The loader auto-detects `*.comfy_quant` keys and executes through `comfy_kitchen.int8_linear(convrot=True)` with online activation rotation; everything else (embeddings, boundary projections, stop_head, Conv1d, RedAE, CAM++) stays float. 321/332 linears -> checkpoint 7.90 -> 3.07 GiB, peak VRAM 13.1 -> 8.3 GiB, with validated output quality. Validate locally with `tools/validate_int8_convrot.py`.
 - **No keep-loaded toggle, no unload node** - The loader handles model-switch cleanup internally.
 
 ## Installation
@@ -58,6 +59,7 @@ Weights are stored per source repo under `ComfyUI/models/fireredtts3/`:
 
 ```text
 ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-bf16/        (bf16 mirror, default)
+ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-int8/        (int8 ConvRot mirror)
 ComfyUI/models/fireredtts3/FireRedTeam_FireRedTTS3/        (official fp32)
     fireredtts3_base/         config.json + model.safetensors
     fireredtts3_instruct/     config.json + model.safetensors
@@ -69,16 +71,16 @@ ComfyUI/models/fireredtts3/fasttext/lid.176.ftz            (shared language-ID m
 
 Only the selected variant is downloaded; both variants share `redae/`, `campp/`, and `text_tokenizer/`.
 
-| Component | Official fp32 | bf16 mirror |
-| --- | --- | --- |
-| `fireredtts3_base` | 8.48 GB | 4.70 GiB |
-| `fireredtts3_instruct` | 8.48 GB | 4.69 GiB |
-| `redae` | 3.78 GB | 2.46 GiB |
-| `campp` + tokenizer + fasttext | ~45 MB | ~45 MB |
+| Component | Official fp32 | bf16 mirror | int8 ConvRot mirror |
+| --- | --- | --- | --- |
+| `fireredtts3_base` | 8.48 GB | 4.70 GiB | 3.30 GB |
+| `fireredtts3_instruct` | 8.48 GB | 4.69 GiB | 3.30 GB |
+| `redae` | 3.78 GB | 2.46 GiB | unchanged |
+| `campp` + tokenizer + fasttext | ~45 MB | ~45 MB | ~45 MB |
 
 Expect roughly **8-14 GB VRAM** depending on variant/dtype and attention backend; AIMDO DynamicVRAM pages castable weights to keep live VRAM pressure low alongside other models.
 
-Folders created manually under `ComfyUI/models/fireredtts3/` that contain `redae/` and `text_tokenizer/` appear in the loader as `local: <name>`.
+Manual installs: place the files under `ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-bf16/` (or the matching repo folder) and the loader uses them without downloading.
 
 ## Nodes
 
@@ -87,11 +89,11 @@ Folders created manually under `ComfyUI/models/fireredtts3/` that contain `redae
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `repo` | COMBO | `FireRedTTS3 bf16 - drbaph (auto-download)` | Weight source: bf16 mirror, official fp32, or a local folder. |
-| `variant` | COMBO | `fireredtts3_base` | `fireredtts3_base` (cloning + language tags) or `fireredtts3_instruct` (cloning + design + editing). |
+| `repo` | COMBO | `FireRedTTS3-bf16` | Weight source: `FireRedTTS3-bf16` (recommended), `FireRedTTS3-int8` (smallest, experimental), `FireRedTTS3-fp32` (official). Missing files download when `download_if_missing` is on; otherwise the error names the expected folder. |
+| `variant` | COMBO | `fireredtts3_instruct` | `fireredtts3_base` (cloning + language tags) or `fireredtts3_instruct` (cloning + design + editing). |
 | `dtype` | COMBO | `auto` | `auto`, `bf16`, `fp32`. bf16 stores backbone LLM + RedAE encoder in bf16 and keeps flow head/decoder fp32 (official mixed precision). |
 | `device` | COMBO | `auto` | `auto`, `cuda`, `cpu`. `auto` follows ComfyUI's current torch device. |
-| `attention` | COMBO | `auto` | `auto`, `sdpa`, `flash_attention`, `sageattention`. |
+| `attention` | COMBO | `auto` | `auto` uses `flash_attention` when flash_attn is installed and compatible (CUDA + bf16 compute), else `sdpa`; also explicit `sdpa` / `flash_attention` / `sageattention`. The fp32 RedAE decoder always uses sdpa. |
 | `download_if_missing` | BOOLEAN | `True` | Download the selected weights, codec, tokenizer, CAM++, and FastText files if missing. |
 
 **Output:** `firered_model` (`FIREREDTTS3_MODEL`)
@@ -111,7 +113,7 @@ Folders created manually under `ComfyUI/models/fireredtts3/` that contain `redae
 | `n_timesteps` | INT | `10` | Flow-matching steps per audio patch. Official default. |
 | `inference_cfg` | FLOAT | `2.0` | Classifier-free guidance for the flow head. `0` disables. |
 | `stop_threshold` | FLOAT | `0.5` | Stop-token probability that ends generation. |
-| `seed` | INT | `0` | `0` is random; a positive value is repeatable. |
+| `seed` | INT | `42` | `0` is random; a positive value is repeatable. |
 | `max_audio_seconds` | FLOAT | `64.0` | Hard cap per sentence (64s is the official maximum). |
 | `do_tn` | BOOLEAN | `True` | Text normalization (wetext for zh/en). |
 | `do_split` | BOOLEAN | `True` | Split long text into sentences, cross-faded together. |
@@ -168,34 +170,28 @@ Folders created manually under `ComfyUI/models/fireredtts3/` that contain `redae
 
 </details>
 
-<details>
-<summary><strong>6/7. FireRedTTS3 RedAE Encode / Decode</strong> - Continuous codec access</summary>
-
-`RedAE Encode` turns `AUDIO` into a `FIREREDTTS3_LATENT` (24 kHz audio → 64-channel, 25 Hz continuous latents). `RedAE Decode` turns those latents back into `AUDIO`. Works with either model variant loaded.
-
-</details>
 
 <details>
-<summary><strong>8. FireRedTTS3 Whisper Transcribe</strong> - Reference transcript helper</summary>
+<summary><strong>6. FireRedTTS3 Whisper Transcribe</strong> - Reference transcript helper</summary>
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `audio` | AUDIO | required | Reference clip to transcribe. |
-| `model` | COMBO | `whisper-large-v3-turbo (auto-download)` | Whisper ASR size; models land in `ComfyUI/models/audio_encoders/`. |
+| `model` | COMBO | `whisper-large-v3-turbo` | Whisper ASR size; downloads into `ComfyUI/models/audio_encoders/` when missing. |
 | `dtype` | COMBO | `auto` | `auto`, `bf16`, `fp32`. |
 | `language` | COMBO | `auto` | Clip language; auto-detects. |
 | `task` | COMBO | `transcribe` | `transcribe` keeps the language; `translate` outputs English. |
 | `chunk_length_s` | INT | `30` | Chunk length for longer clips. |
 | `download_if_missing` | BOOLEAN | `True` | Download the Whisper model if needed. |
 
-**Output:** `transcript` (`STRING`) - connect it to Voice Clone's `prompt_text` (right-click the clone node -> convert `prompt_text` to input).
+**Outputs:** `transcript` (`STRING`) - connect it to Voice Clone's `prompt_text` (right-click the clone node -> convert `prompt_text` to input); `audio` (`AUDIO`) - the input passed through unchanged, for chaining to the clone node.
 
 </details>
 
 ## Usage Notes
 
 - A correct `prompt_text` transcript materially improves cloning; the Whisper node produces it in one click.
-- For best cloning, use a prompt clip in the target language/dialect - the output inherits the reference's speaking style.
+- For best cloning, use a prompt clip in the target language/dialect - the output inherits the reference's speaking style. Reference clips longer than ~655s are rejected (RedAE encoder limit); 5-20s clones best.
 - Official defaults are preserved: 10 flow steps, CFG 2.0 (clone) / 1.2 (design and edits), stop threshold 0.5, ~64s per-sentence cap, 50 ms cross-fade.
 - The upstream LLM-API text normalizer is intentionally excluded; this nodepack makes no external API calls.
 
@@ -210,6 +206,6 @@ Folders created manually under `ComfyUI/models/fireredtts3/` that contain `redae
 
 - [FireRedTeam/FireRedTTS3](https://github.com/FireRedTeam/FireRedTTS3) - model and original implementation (Apache-2.0)
 - [Qwen3](https://github.com/QwenLM/Qwen3), [DiTAR](https://arxiv.org/abs/2502.03930), [X-Codec](https://github.com/zhenye234/xcodec), [CAM++](https://modelscope.cn/models/iic/speech_campplus_sv_en_voxceleb_16k), [fastText](https://fasttext.cc/), [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing)
-- bf16 mirror: [drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16)
+- bf16 mirror: [drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16), int8 ConvRot mirror: [drbaph/FireRedTTS3-int8](https://huggingface.co/drbaph/FireRedTTS3-int8)
 
 Voice cloning is intended for research use. Do not clone voices without consent, and do not use generated audio for illegal activities.

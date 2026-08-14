@@ -18,7 +18,7 @@ try:
 except ImportError:  # pragma: no cover
     regex = None
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 
 FASTTEXT_FILENAME = "lid.176.ftz"
 FASTTEXT_URL = f"https://dl.fbaipublicfiles.com/fasttext/supervised-models/{FASTTEXT_FILENAME}"

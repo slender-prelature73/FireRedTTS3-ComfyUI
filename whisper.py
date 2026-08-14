@@ -12,7 +12,7 @@ import torch
 
 from .loader import dynamic_vram_active, register_runtime_module, resume_runtime_module
 
-logger = logging.getLogger("FireRedTTS3-ComfyUI")
+logger = logging.getLogger("FireRedTTS3")
 
 WHISPER_DTYPE_OPTIONS = ["auto", "bf16", "fp32"]
 WHISPER_TASK_OPTIONS = ["transcribe", "translate"]
@@ -33,11 +33,11 @@ WHISPER_LANGUAGE_OPTIONS = [
 ]
 
 POPULAR_WHISPER_MODELS = {
-    "whisper-large-v3-turbo (auto-download)": "openai/whisper-large-v3-turbo",
-    "whisper-large-v3 (auto-download)": "openai/whisper-large-v3",
-    "whisper-medium (auto-download)": "openai/whisper-medium",
-    "whisper-small (auto-download)": "openai/whisper-small",
-    "whisper-tiny (auto-download)": "openai/whisper-tiny",
+    "whisper-large-v3-turbo": "openai/whisper-large-v3-turbo",
+    "whisper-large-v3": "openai/whisper-large-v3",
+    "whisper-medium": "openai/whisper-medium",
+    "whisper-small": "openai/whisper-small",
+    "whisper-tiny": "openai/whisper-tiny",
 }
 
 _PIPELINE_CACHE: dict[tuple[str, str, str], Any] = {}
@@ -48,13 +48,25 @@ def _safe_repo_name(repo_id: str) -> str:
     return repo_id.replace("/", "_").replace("\\", "_").replace(":", "_")
 
 
-def audio_encoders_dir() -> Path:
+def audio_encoders_dirs() -> list[Path]:
+    """All registered audio_encoders folders (extra_model_paths.yaml aware), primary first."""
     try:
         import folder_paths
 
-        base = Path(folder_paths.models_dir) / "audio_encoders"
+        primary = Path(folder_paths.models_dir) / "audio_encoders"
+        paths = [Path(p) for p in folder_paths.get_folder_paths("audio_encoders")]
+        if primary not in paths:
+            paths.insert(0, primary)
+        if paths:
+            return paths
     except Exception:
-        base = Path(__file__).resolve().parent / "models" / "audio_encoders"
+        pass
+    return [Path(__file__).resolve().parent / "models" / "audio_encoders"]
+
+
+def audio_encoders_dir() -> Path:
+    """Primary audio_encoders folder: lookup starts here and downloads land here."""
+    base = audio_encoders_dirs()[0]
     base.mkdir(parents=True, exist_ok=True)
     return base
 
@@ -80,21 +92,16 @@ def _has_whisper_files(path: Path) -> bool:
 
 
 def whisper_model_choices() -> list[str]:
-    choices = list(POPULAR_WHISPER_MODELS)
-    known = {_safe_repo_name(repo_id) for repo_id in POPULAR_WHISPER_MODELS.values()}
-    try:
-        for entry in sorted(audio_encoders_dir().iterdir()):
-            if entry.is_dir() and entry.name not in known and _has_whisper_files(entry):
-                choices.append(entry.name)
-    except OSError:
-        pass
-    return choices
+    return list(POPULAR_WHISPER_MODELS)
 
 
 def _download_whisper(repo_id: str, download_if_missing: bool) -> Path:
-    dest = audio_encoders_dir() / _safe_repo_name(repo_id)
-    if _has_whisper_files(dest):
-        return dest
+    name = _safe_repo_name(repo_id)
+    for base in audio_encoders_dirs():
+        existing = base / name
+        if _has_whisper_files(existing):
+            return existing
+    dest = audio_encoders_dir() / name
     if not download_if_missing:
         raise FileNotFoundError(f"Whisper model is missing at {dest}. Enable download_if_missing.")
 
@@ -118,13 +125,14 @@ def _download_whisper(repo_id: str, download_if_missing: bool) -> Path:
 def _resolve_whisper_path(model_name: str, download_if_missing: bool) -> Path:
     if model_name in POPULAR_WHISPER_MODELS:
         return _download_whisper(POPULAR_WHISPER_MODELS[model_name], download_if_missing)
-    path = audio_encoders_dir() / model_name
-    if _has_whisper_files(path):
-        return path
+    for base in audio_encoders_dirs():
+        path = base / model_name
+        if _has_whisper_files(path):
+            return path
     repo_id = model_name.replace("_", "/", 1)
     if "/" in repo_id:
         return _download_whisper(repo_id, download_if_missing)
-    raise FileNotFoundError(f"Whisper model not found under {audio_encoders_dir()}: {model_name}")
+    raise FileNotFoundError(f"Whisper model not found under {audio_encoders_dirs()}: {model_name}")
 
 
 def _resolve_device() -> str:
@@ -257,8 +265,8 @@ class FireRedWhisperTranscribe:
                 "model": (
                     whisper_model_choices(),
                     {
-                        "default": "whisper-large-v3-turbo (auto-download)",
-                        "tooltip": "Whisper ASR model. Turbo is fast and usually accurate enough for reference transcripts.",
+                        "default": "whisper-large-v3-turbo",
+                        "tooltip": "Whisper ASR model. Turbo is fast and usually accurate enough for reference transcripts. Downloads into ComfyUI/models/audio_encoders when missing.",
                     },
                 ),
                 "dtype": (
@@ -290,14 +298,15 @@ class FireRedWhisperTranscribe:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("transcript",)
+    RETURN_TYPES = ("AUDIO", "STRING")
+    RETURN_NAMES = ("audio", "transcript")
     FUNCTION = "transcribe"
     CATEGORY = "FireRedTTS3"
-    DESCRIPTION = "Transcribe reference AUDIO with Whisper for FireRedTTS3 voice cloning."
+    DESCRIPTION = "Transcribe reference AUDIO with Whisper for FireRedTTS3 voice cloning. Audio output is the input passed through unchanged."
 
     def transcribe(self, audio: dict, model: str, dtype: str, language: str, task: str,
-                   chunk_length_s: int, download_if_missing: bool) -> tuple[str]:
+                   chunk_length_s: int, download_if_missing: bool) -> tuple[dict, str]:
         text = transcribe_audio(audio, model, dtype, language, task, int(chunk_length_s), bool(download_if_missing))
-        logger.info("Whisper transcript: %s", text)
-        return (text,)
+        preview = text if len(text) <= 100 else text[:100].rstrip() + "…"
+        logger.info("transcript: %s", preview)
+        return (audio, text)
